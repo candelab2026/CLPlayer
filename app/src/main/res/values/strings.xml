@@ -65,6 +65,8 @@
     <string name="theme_mode_system">System</string>
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
+    <string name="settings_lastwave_theme">LastWave Signature Theme</string>
+    <string name="settings_lastwave_theme_sub">Bespoke logo palette • Electric Lime &amp; Obsidian Teal</string>
     <string name="settings_amoled">AMOLED Mode</string>
     <string name="settings_amoled_sub">Pure black background (Dark mode only)</string>
     <string name="settings_dynamic_color">Dynamic Color</string>
@@ -76,10 +78,27 @@
     <string name="settings_section_accent">Accent</string>
 
     <string name="settings_section_experimental">Experimental</string>
+    <string name="settings_music_video">Music Video</string>
+    <string name="settings_music_video_on">Watch synced music videos in Now Playing menu</string>
+    <string name="settings_music_video_off">Disabled (enable to watch synced video in player menu)</string>
+    <string name="menu_watch_video">Watch Video</string>
+    <string name="menu_watch_video_sub">Exact ms sync with playing music</string>
+    <string name="video_sync_tag">SYNCED</string>
+    <string name="video_buffering">Syncing video stream…</string>
+    <string name="video_stream_unavailable">Unable to load video stream for this track</string>
+    <string name="video_retry">Retry</string>
+    <string name="video_exit_fullscreen">Exit full screen</string>
+    <string name="video_enter_fullscreen">Full screen</string>
+    <string name="video_quality">Quality</string>
+    <string name="video_quality_title">Select Video Quality</string>
+    <string name="video_quality_auto">Auto</string>
+    <string name="video_quality_auto_recommended">Auto (Recommended)</string>
     <string name="settings_liquid_glass">Liquid Glass</string>
     <string name="settings_liquid_glass_sub">iOS-style translucent materials across the app</string>
     <string name="settings_md3_nav_bar">Material 3 Navigation Bar</string>
-    <string name="settings_md3_nav_bar_sub">Use classic full-width bottom navigation instead of the floating dock</string>
+    <string name="settings_md3_nav_bar_sub">Enable modern floating dock navigation instead of classic bottom tabs</string>
+    <string name="settings_hide_nav_tabs">Hide Navigation Tabs</string>
+    <string name="settings_hide_nav_tabs_sub">Completely hide navigation tabs and switch between screens using swipe gestures only</string>
     <string name="settings_lyrics_animation">Lyrics Animation</string>
     <string name="settings_lyrics_provider">Lyrics provider</string>
     <string name="settings_lyrics_provider_desc">Tried first for every song. If it returns nothing, the app automatically falls through to the other providers.</string>
@@ -459,6 +478,8 @@
     <string name="details_resolution">Resolution</string>
     <string name="details_bitrate">Bitrate</string>
     <string name="details_provider">Provider</string>
+    <string name="details_canvas_source">Canvas</string>
+    <string name="details_canvas_none">None</string>
     <string name="details_duration">Duration</string>
     <string name="details_offline_storage">Offline Storage</string>
     <string name="details_status">Status</string>
@@ -505,6 +526,9 @@
     <string name="menu_quick_play">Play</string>
     <string name="menu_quick_play_next">Play next</string>
     <string name="menu_quick_add_playlist">Add to playlist</string>
+    <string name="menu_quick_jam">Jam</string>
+    <string name="settings_jam_title">LastWave Jam</string>
+    <string name="settings_jam_sub">Listen together in real-time \u2022 Host or join with code</string>
 
     <!-- Playlists screen -->
     <string name="pl_sort_newest">Newest first</string>
@@ -713,6 +737,7 @@
     <string name="search_hint_users">Search Last.fm users…</string>
     <string name="search_hint_yt">Search YouTube Music…</string>
     <string name="search_tab_tracks">Tracks</string>
+    <string name="search_tab_podcasts">Podcasts</string>
     <string name="search_tab_artists">Artists</string>
     <string name="search_tab_albums">Albums</string>
     <string name="search_tab_playlists">Playlists</string>
@@ -921,6 +946,8 @@
     <string name="set_cat_appear_sub">Themes, Colors, Artwork, Lyrics</string>
     <string name="set_cat_yt">YouTube &amp; Sync</string>
     <string name="set_cat_yt_sub">Account connection, 24/7 Library sync, Channels, History</string>
+    <string name="set_cat_spotify">Spotify</string>
+    <string name="set_cat_spotify_sub">Account connection, Canvas, Playlist imports &amp; Liked Songs sync</string>
     <string name="set_cat_lfm">Last.fm</string>
     <string name="set_cat_lfm_sub">Account connection, Scrobbling sync &amp; API credentials</string>
     <string name="set_cat_lib">Library &amp; Content</string>
@@ -1070,6 +1097,9 @@
     <string name="art_albums">Albums</string>
     <string name="art_fans_like">Fans Also Like</string>
     <string name="art_load_fail">Failed to load artist details</string>
+    <string name="art_type_album">Album</string>
+    <string name="art_type_single">Single</string>
+    <string name="art_type_ep">EP</string>
 
     <!-- Album detail -->
     <string name="alb_shuffle_cd">Shuffle Album</string>
@@ -1089,7 +1119,7 @@
 
     <!-- Genres -->
     <string name="ge_title">Your Genres</string>
-    <string name="ge_sub">Based on your listening history</string>
+    <string name="ge_sub">Your Genres</string>
     <string name="ge_empty">No genre data yet</string>
     <string name="ge_tracks">Your Tracks</string>
     <string name="ge_discover">Discover More</string>
@@ -1139,6 +1169,47 @@
     <string name="lyshare_color_brand">LastWave Lime</string>
     <string name="lyshare_accessibility_line_selected">Selected, line %1$d of %2$d</string>
     <string name="lyshare_accessibility_line_unselected">Line %1$d of %2$d</string>
+    <!-- Remaining screen strings -->
+    <string name="gen_progress_title">Generating Playlist</string>
+    <string name="disc_error_title">Something went wrong</string>
+    <string name="disc_empty_title">No recommendations yet</string>
+    <string name="disc_empty_hint">Listen to more music on Last.fm, then pull to refresh.</string>
+    <string name="ly_offset_title">Lyrics sync offset</string>
+    <string name="ly_size_title">Lyrics text size</string>
+    <string name="excluded_restore">Restore</string>
+    <string name="cast_title">Chromecast</string>
+    <string name="cast_unavailable">Chromecast requires Google Play services</string>
+    <string name="ytimport_fetching">Fetching Playlist…</string>
+    <string name="ytimport_fetch">Fetch Playlist</string>
+    <string name="ytimport_importing">Importing Playlist…</string>
+    <string name="ytimport_import_n">Import %1$d Songs</string>
+    <string name="ytimport_clear_cd">Clear</string>
+    <string name="ytimport_paste_cd">Paste from clipboard</string>
+    <string name="ytlogin_continue">Continue</string>
+    <string name="ytlogin_verifying">Verifying…</string>
+    <string name="ytlogin_signed_in">I\'m signed in</string>
+
+    <!-- Signal path dialog -->
+    <string name="sig_node_source">Source</string>
+    <string name="sig_node_dsp">DSP</string>
+    <string name="sig_node_volume">Volume Control</string>
+    <string name="sig_node_output">Output</string>
+    <string name="sig_node_device">Output Device</string>
+    <string name="sig_eq">Equalizer</string>
+    <string name="sig_tone">Tone</string>
+    <string name="sig_tone_off">Tone Off</string>
+    <string name="sig_crossfade">Crossfade</string>
+    <string name="sig_buffers">Buffers</string>
+    <string name="sig_latency">Latency</string>
+    <string name="sig_preamp">Preamp</string>
+    <string name="sig_flags">Flags</string>
+    <string name="sig_eq_off">Equ Off • Balance (0%)</string>
+    <string name="sig_eq_mode">Equalizer Mode: graphic (10-band)</string>
+    <string name="sig_xfade_active">Crossfade active</string>
+    <string name="sig_xfade_off">No fading / Short crossfade</string>
+    <string name="sig_buffers_value">2x (50 ms, %1$d audioframes)</string>
+    <string name="sig_ms_value">%1$d ms</string>
+
     <string name="settings_section_content">Content</string>
     <string name="settings_podcasts">Podcasts</string>
     <string name="settings_podcasts_sub_on">Show podcast shelves, show pages and episode search</string>

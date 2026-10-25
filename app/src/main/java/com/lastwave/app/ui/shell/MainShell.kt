@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +40,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -50,11 +54,15 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,7 +70,9 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -144,8 +154,12 @@ import javax.inject.Inject
 @HiltViewModel
 class MainShellViewModel @Inject constructor(
     val appUpdateManager: com.lastwave.app.data.update.AppUpdateManager,
+    val ytAuthManager: com.lastwave.app.data.ytmusic.YtMusicAuthManager,
+    val settingsPreferences: com.lastwave.app.data.local.SettingsPreferences,
 ) : ViewModel() {
     val updateInfo = appUpdateManager.updateInfo
+    val ytConnection = ytAuthManager.connection
+    val settings = settingsPreferences.settings
 
     fun dismissUpdate(version: String) {
         appUpdateManager.dismissUpdate(version)
@@ -153,6 +167,12 @@ class MainShellViewModel @Inject constructor(
 
     fun openUpdate(context: android.content.Context) {
         appUpdateManager.openUpdate(context)
+    }
+
+    fun setSuppressYouTubeLoginPrompt(suppress: Boolean) {
+        viewModelScope.launch {
+            settingsPreferences.setSuppressYouTubeLoginPrompt(suppress)
+        }
     }
 }
 
@@ -177,10 +197,17 @@ object FloatingNavDefaults {
      * constant, otherwise the last row hides behind the dock/gesture bar.
      */
     @Composable
-    fun contentBottomPadding(): Dp =
-        ContentBottomPadding +
+    fun contentBottomPadding(): Dp {
+        val hideNav = com.lastwave.app.ui.theme.LocalHideNavTabs.current
+        val basePadding = when {
+            hideNav -> 16.dp
+            LocalMd3NavBar.current -> ContentBottomPadding
+            else -> 80.dp
+        }
+        return basePadding +
             LocalMiniPlayerScrollClearance.current +
             WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+    }
 }
 
 private val DockShape: CornerBasedShape = RoundedCornerShape(32.dp)
@@ -203,6 +230,7 @@ fun MainShell(
     onOpenDownloads: () -> Unit = {},
     onOpenPodcasts: () -> Unit = {},
     onOpenPodcastShow: (String) -> Unit = {},
+    onOpenYouTubeLogin: () -> Unit = {},
     mainShellViewModel: MainShellViewModel = hiltViewModel(),
 ) {
     val tabs = MainTab.entries
@@ -224,6 +252,85 @@ fun MainShell(
     }
     val updateInfo by mainShellViewModel.updateInfo.collectAsStateWithLifecycle()
     val showUpdateBanner = updateInfo.isUpdateAvailable && !updateInfo.isDismissed
+    val ytConnection by mainShellViewModel.ytConnection.collectAsStateWithLifecycle()
+    val settings by mainShellViewModel.settings.collectAsStateWithLifecycle(initialValue = com.lastwave.app.data.local.MiscSettings())
+    var promptDismissedThisSession by rememberSaveable { mutableStateOf(false) }
+
+    val shouldShowLoginPrompt = !ytConnection.isConnected &&
+        !settings.suppressYouTubeLoginPrompt &&
+        !promptDismissedThisSession
+
+    if (shouldShowLoginPrompt) {
+        var dontShowAgain by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = {
+                if (dontShowAgain) mainShellViewModel.setSuppressYouTubeLoginPrompt(true)
+                promptDismissedThisSession = true
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = if (LocalLiquidGlass.current) {
+                MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            },
+            title = {
+                Text(
+                    text = "Get better recommendations",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        text = "Log in to YouTube Music, or create a free account, to get personalized songs and queues.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { dontShowAgain = !dontShowAgain }
+                            .padding(vertical = 4.dp),
+                    ) {
+                        Checkbox(
+                            checked = dontShowAgain,
+                            onCheckedChange = { dontShowAgain = it },
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Don't show again",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (dontShowAgain) mainShellViewModel.setSuppressYouTubeLoginPrompt(true)
+                        promptDismissedThisSession = true
+                        onOpenYouTubeLogin()
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                ) {
+                    Text("Take me to YT Music login")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (dontShowAgain) mainShellViewModel.setSuppressYouTubeLoginPrompt(true)
+                        promptDismissedThisSession = true
+                    },
+                ) {
+                    Text("OK, thanks")
+                }
+            },
+        )
+    }
+
     val backgroundColor = MaterialTheme.colorScheme.background
     // Unconditional remember keeps composition stable; usage gated below.
     val navigationBackdrop = rememberLayerBackdrop {
@@ -292,6 +399,62 @@ fun MainShell(
         }
 
         val bottomNavSlot = com.lastwave.app.ui.player.LocalBottomNavSlot.current
+        val hideNavTabs = com.lastwave.app.ui.theme.LocalHideNavTabs.current
+        val md3NavBar = LocalMd3NavBar.current
+        val clearance = com.lastwave.app.ui.player.LocalMiniPlayerScrollClearance.current
+        val isMiniPlayerActive = clearance > 0.dp
+        val systemBottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+
+        val generatorFabBottomOffset by animateDpAsState(
+            targetValue = when {
+                hideNavTabs -> {
+                    if (isMiniPlayerActive) systemBottomInset + 12.dp + 72.dp + 16.dp
+                    else systemBottomInset + 20.dp
+                }
+                md3NavBar -> { // Floating dock is active
+                    if (isMiniPlayerActive) systemBottomInset + 92.dp + 72.dp + 16.dp
+                    else systemBottomInset + 92.dp
+                }
+                else -> { // Normal tabs navigation is active
+                    if (isMiniPlayerActive) systemBottomInset + 68.dp + 72.dp + 16.dp
+                    else systemBottomInset + 56.dp + 20.dp
+                }
+            },
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            label = "generatorFabBottomOffset",
+        )
+
+        // Floating generator button on bottom-right for playlist tab in normal tabs mode or hide-nav mode
+        AnimatedVisibility(
+            visible = selectedTabIndex == tabs.indexOf(MainTab.PLAYLISTS) && (!md3NavBar || hideNavTabs),
+            enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.6f),
+            exit = fadeOut(tween(120)) + scaleOut(targetScale = 0.6f),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = generatorFabBottomOffset)
+                .zIndex(15f),
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = liquidGlassContainerColor(MaterialTheme.colorScheme.primaryContainer, backdrop = navigationBackdrop),
+                shadowElevation = if (navGlass) 0.dp else 8.dp,
+                tonalElevation = if (navGlass) 0.dp else 4.dp,
+                modifier = Modifier
+                    .size(56.dp)
+                    .liquidGlassChrome(CircleShape, LocalLiquidGlass.current, LiquidGlassPreset.FloatingControls, navigationBackdrop)
+                    .clickable(onClick = onOpenGenerator),
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Icon(
+                        imageVector = Icons.Filled.AutoAwesome,
+                        contentDescription = androidx.compose.ui.res.stringResource(com.lastwave.app.R.string.nav_create_playlist),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        }
+
         val currentSelectedIndex by androidx.compose.runtime.rememberUpdatedState(selectedTabIndex)
         val currentOnSelect by androidx.compose.runtime.rememberUpdatedState { index: Int ->
             if (index != selectedTabIndex) selectedTabIndex = index
@@ -300,18 +463,22 @@ fun MainShell(
         }
         val currentOnOpenGenerator by androidx.compose.runtime.rememberUpdatedState(onOpenGenerator)
 
-        androidx.compose.runtime.DisposableEffect(navigationBackdrop, tabs) {
-            bottomNavSlot.value = {
-                Box(Modifier.fillMaxSize()) {
-                    FloatingNavBar(
-                        backdrop = navigationBackdrop,
-                        tabs = tabs,
-                        selectedIndex = currentSelectedIndex,
-                        onSelect = currentOnSelect,
-                        onOpenGenerator = currentOnOpenGenerator,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+        androidx.compose.runtime.DisposableEffect(navigationBackdrop, tabs, hideNavTabs) {
+            if (!hideNavTabs) {
+                bottomNavSlot.value = {
+                    Box(Modifier.fillMaxSize()) {
+                        FloatingNavBar(
+                            backdrop = navigationBackdrop,
+                            tabs = tabs,
+                            selectedIndex = currentSelectedIndex,
+                            onSelect = currentOnSelect,
+                            onOpenGenerator = currentOnOpenGenerator,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
                 }
+            } else {
+                bottomNavSlot.value = {}
             }
             onDispose { bottomNavSlot.value = {} }
         }
@@ -401,13 +568,13 @@ private fun FloatingNavBar(
     val dockInteraction = remember { MutableInteractionSource() }
     val fabInteraction = remember { MutableInteractionSource() }
     
-    if (md3NavBar) {
+    if (!md3NavBar) {
         val navContainerColor = liquidGlassContainerColor(
             MaterialTheme.colorScheme.surfaceContainer,
             enabled = liquidGlass,
             backdrop = backdrop,
         )
-        androidx.compose.material3.NavigationBar(
+        Surface(
             modifier = modifier
                 .fillMaxWidth()
                 .then(
@@ -426,37 +593,93 @@ private fun FloatingNavBar(
                         Modifier
                     }
                 ),
-            containerColor = navContainerColor,
+            shape = RoundedCornerShape(0.dp),
+            color = navContainerColor,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             tonalElevation = if (liquidGlass) 0.dp else 3.dp,
         ) {
-            tabs.forEachIndexed { index, tab ->
-                val onClick = remember(index) { { onSelect(index) } }
-                NavigationBarItem(
-                    selected = selectedIndex == index,
-                    onClick = onClick,
-                    icon = { Icon(tab.icon(), contentDescription = null) },
-                    label = { Text(androidx.compose.ui.res.stringResource(tab.labelRes), maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                )
-            }
-            if (selectedIndex == tabs.indexOf(MainTab.PLAYLISTS)) {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onOpenGenerator,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.AutoAwesome,
-                            contentDescription = androidx.compose.ui.res.stringResource(com.lastwave.app.R.string.nav_generator),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 420.dp)
+                        .height(56.dp)
+                        .selectableGroup(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        val onClick = remember(index) { { onSelect(index) } }
+                        val selected = selectedIndex == index
+                        val indicatorColor by animateColorAsState(
+                            targetValue = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(
+                                alpha = if (liquidGlass) 0.35f else 1f,
+                            ) else Color.Transparent,
+                            animationSpec = ExpressiveMotion.effectsDefault(),
+                            label = "md3IndicatorColor_$index",
                         )
-                    },
-                    label = {
-                        Text(
-                            text = androidx.compose.ui.res.stringResource(com.lastwave.app.R.string.nav_generator),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                        val indicatorWidth by animateDpAsState(
+                            targetValue = if (selected) 56.dp else 28.dp,
+                            animationSpec = navSpring(),
+                            label = "md3IndicatorWidth_$index",
                         )
-                    },
-                )
+                        val iconTint by animateColorAsState(
+                            targetValue = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            animationSpec = ExpressiveMotion.effectsDefault(),
+                            label = "md3IconTint_$index",
+                        )
+                        val labelColor by animateColorAsState(
+                            targetValue = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            animationSpec = ExpressiveMotion.effectsDefault(),
+                            label = "md3LabelColor_$index",
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable(
+                                    interactionSource = remember(index) { MutableInteractionSource() },
+                                    indication = androidx.compose.material3.ripple(bounded = false, radius = 28.dp),
+                                    onClick = onClick,
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .height(28.dp)
+                                    .width(indicatorWidth)
+                                    .clip(CircleShape)
+                                    .background(indicatorColor),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = tab.icon(),
+                                    contentDescription = null,
+                                    tint = iconTint,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                text = androidx.compose.ui.res.stringResource(tab.labelRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = labelColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
             }
         }
         return
@@ -594,12 +817,12 @@ private fun FloatingNavItem(
         targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
             alpha = if (LocalLiquidGlass.current) 0.28f else 1f,
         ) else Color.Transparent,
-        animationSpec = navSpring(),
+        animationSpec = ExpressiveMotion.effectsDefault(),
         label = "navItemBackground",
     )
     val contentColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = navSpring(),
+        animationSpec = ExpressiveMotion.effectsDefault(),
         label = "navItemContent",
     )
     // Animate the pill padding instead of jumping it: combined with the label

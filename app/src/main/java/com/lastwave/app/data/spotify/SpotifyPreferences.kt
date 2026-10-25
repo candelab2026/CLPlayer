@@ -42,11 +42,22 @@ class SpotifyPreferences @Inject constructor(
         .recoverPreferences("SpotifyPreferences")
         .map { it.readSafely(CANVAS_ENABLED_KEY) ?: true }
 
-    val syncLikedSongsEnabled: Flow<Boolean> = dataStore.data
+    /**
+     * Whether Spotify is asked before the other providers.
+     *
+     * Off by default: the other providers answer without an account and cover most of what
+     * Spotify would have answered, and Spotify is the one that needs a session. On, Spotify is
+     * asked first so that a track with a canvas on Spotify gets Spotify's clip.
+     */
+    val preferSpotifyCanvas: Flow<Boolean> = dataStore.data
         .recoverPreferences("SpotifyPreferences")
-        .map { it.readSafely(SYNC_LIKED_SONGS_KEY) ?: true }
+        .map { it.readSafely(PREFER_SPOTIFY_CANVAS_KEY) ?: true }
 
     val isConnected: Flow<Boolean> = spdc.map { !it.isNullOrBlank() }
+    /** The per-install device id the client-token profile presents. */
+    val deviceId: Flow<String> = dataStore.data
+        .recoverPreferences("SpotifyPreferences")
+        .map { it.readSafely(DEVICE_ID_KEY).orEmpty() }
 
     suspend fun getSpdc(): String? = spdc.first()
     suspend fun getPersonalToken(): String? = personalToken.first()
@@ -54,7 +65,24 @@ class SpotifyPreferences @Inject constructor(
     suspend fun getClientToken(): String? = clientToken.first()
     suspend fun getClientTokenExpires(): Long = clientTokenExpires.first()
     suspend fun isCanvasEnabled(): Boolean = canvasEnabled.first()
-    suspend fun isSyncLikedSongsEnabled(): Boolean = syncLikedSongsEnabled.first()
+    suspend fun isPreferSpotifyCanvas(): Boolean = preferSpotifyCanvas.first()
+
+    /**
+     * The device id this install presents, generated once and kept.
+     *
+     * The client-token endpoint is told which device is asking. Two installs sharing one
+     * id are two browsers from one machine, so the id is generated per install instead.
+     */
+    suspend fun getOrCreateDeviceId(): String {
+        deviceId.first().takeIf { it.isNotBlank() }?.let { return it }
+        val generated = java.util.UUID.randomUUID().toString()
+        dataStore.edit { prefs ->
+            // Another writer may have won the race; keep whichever id is stored.
+            val stored = prefs[DEVICE_ID_KEY]
+            if (stored.isNullOrBlank()) prefs[DEVICE_ID_KEY] = generated
+        }
+        return deviceId.first().ifBlank { generated }
+    }
 
     suspend fun saveSpdc(spdcValue: String) {
         val clean = spdcValue.trim().let {
@@ -88,11 +116,12 @@ class SpotifyPreferences @Inject constructor(
         }
     }
 
-    suspend fun setSyncLikedSongsEnabled(enabled: Boolean) {
+    suspend fun setPreferSpotifyCanvas(enabled: Boolean) {
         dataStore.edit { prefs ->
-            prefs[SYNC_LIKED_SONGS_KEY] = enabled
+            prefs[PREFER_SPOTIFY_CANVAS_KEY] = enabled
         }
     }
+
 
     suspend fun clearConnection() {
         dataStore.edit { prefs ->
@@ -111,6 +140,7 @@ class SpotifyPreferences @Inject constructor(
         val CLIENT_TOKEN_KEY = stringPreferencesKey("spotify_client_token")
         val CLIENT_TOKEN_EXPIRES_KEY = longPreferencesKey("spotify_client_token_expires")
         val CANVAS_ENABLED_KEY = booleanPreferencesKey("spotify_canvas_enabled")
-        val SYNC_LIKED_SONGS_KEY = booleanPreferencesKey("spotify_sync_liked_songs")
+        val PREFER_SPOTIFY_CANVAS_KEY = booleanPreferencesKey("spotify_prefer_canvas")
+        val DEVICE_ID_KEY = stringPreferencesKey("spotify_device_id")
     }
 }

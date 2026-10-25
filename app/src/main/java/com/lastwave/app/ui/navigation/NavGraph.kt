@@ -286,6 +286,9 @@ fun LastWaveNavHost(
                 onOpenPodcastShow = { showId ->
                     navController.navigate(Screen.PodcastShow.createRoute(showId))
                 },
+                onOpenYouTubeLogin = {
+                    navController.navigate(Screen.YouTubeLogin.route)
+                },
             )
         }
 
@@ -408,18 +411,52 @@ fun LastWaveNavHost(
                     onOpenYouTubeImport = { navController.navigate(Screen.YouTubeImport.route) },
                     onOpenYouTubeLogin = { navController.navigate(Screen.YouTubeLogin.route) },
                     onOpenSpotifyLogin = { navController.navigate(Screen.SpotifyLogin.route) },
+                    onOpenSpotifyTokenImport = { navController.navigate(Screen.SpotifyTokenImport.route) },
                     onOpenExternalImport = { navController.navigate(Screen.ExternalPlaylistImport.route) },
                 )
             }
         }
 
-        composable(Screen.SpotifyLogin.route) {
-            PredictiveBackScreen(onBack = { navController.popBackStack() }) {
-                com.lastwave.app.ui.settings.SpotifyLoginScreen(
-                    onBack = { navController.popBackStack() },
-                    onConnected = { navController.popBackStack() },
-                )
+      composable(Screen.SpotifyLogin.route) {
+      PredictiveBackScreen(onBack = { navController.popBackStack() }) {
+      com.lastwave.app.ui.settings.SpotifyLoginScreen(
+      onBack = { navController.popBackStack() },
+      onConnected = { navController.popBackStack() },
+      )
+      }
+      }
+
+      composable(Screen.SpotifyTokenImport.route) {
+      PredictiveBackScreen(onBack = { navController.popBackStack() }) {
+      com.lastwave.app.ui.settings.SpotifyLoginScreen(
+      onBack = { navController.popBackStack() },
+      onConnected = { navController.popBackStack() },
+      openManualEntryInitially = true,
+      )
+      }
+      }
+
+        composable(
+            route = Screen.Jam.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("code") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { backStackEntry ->
+            val code = backStackEntry.arguments?.getString("code")
+            val jamViewModel: com.lastwave.app.ui.jam.LastWaveJamViewModel = hiltViewModel()
+            androidx.compose.runtime.LaunchedEffect(code) {
+                if (!code.isNullOrBlank()) {
+                    jamViewModel.setPendingCode(code)
+                }
             }
+            com.lastwave.app.ui.jam.LastWaveJamSheet(
+                viewModel = jamViewModel,
+                onDismiss = { navController.popBackStack() },
+            )
         }
 
         composable(Screen.YouTubeImport.route) {

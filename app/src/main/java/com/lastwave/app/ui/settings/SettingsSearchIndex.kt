@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.BubbleChart
@@ -428,6 +429,23 @@ object SettingsSearchIndex {
             )
             add(
                 SettingsEntry(
+                    id = "appearance.lastwave_theme",
+                    title = "LastWave Signature Theme",
+                    subtitle = "Bespoke logo palette with Electric Lime and Obsidian Teal",
+                    keywords = listOf(
+                        "lastwave theme", "brand theme", "special theme", "logo theme", "lime",
+                        "teal", "obsidian", "electric lime", "iconic theme", "brand colors"
+                    ),
+                    icon = Icons.Filled.AutoAwesome,
+                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
+                    parentTab = SettingsTab.APPEARANCE,
+                    section = "Appearance",
+                    type = EntryType.TOGGLE,
+                )
+            )
+            add(
+                SettingsEntry(
                     id = "appearance.amoled",
                     title = "Pure Black AMOLED",
                     subtitle = "Pitch black surfaces for OLED and AMOLED screens to save battery",
@@ -591,6 +609,23 @@ object SettingsSearchIndex {
                     icon = Icons.Filled.Waves,
                     iconContainer = { MaterialTheme.colorScheme.secondaryContainer },
                     iconTint = { MaterialTheme.colorScheme.onSecondaryContainer },
+                    parentTab = SettingsTab.APPEARANCE,
+                    section = "Experimental & Features",
+                    type = EntryType.TOGGLE,
+                )
+            )
+            add(
+                SettingsEntry(
+                    id = "appearance.music_video",
+                    title = "Music Video",
+                    subtitle = "Watch exact-sync music video of currently playing song in player menu",
+                    keywords = listOf(
+                        "video", "music video", "watch video", "mv", "synced video", "youtube video",
+                        "fullscreen video", "exact ms sync", "now playing video"
+                    ),
+                    icon = Icons.Filled.SmartDisplay,
+                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
                     parentTab = SettingsTab.APPEARANCE,
                     section = "Experimental & Features",
                     type = EntryType.TOGGLE,
@@ -897,12 +932,29 @@ object SettingsSearchIndex {
                     subtitle = "Sign in to enable official Spotify Canvas video loops & library sync",
                     keywords = listOf(
                         "spotify", "spotify account", "connect spotify", "sp_dc", "spotify login",
-                        "canvas login"
+                        "canvas login", "disconnect spotify", "logout spotify", "sign out"
                     ),
                     icon = Icons.Filled.PlayCircle,
                     iconContainer = { MaterialTheme.colorScheme.primaryContainer },
                     iconTint = { MaterialTheme.colorScheme.primary },
-                    parentTab = SettingsTab.YOUTUBE,
+                    parentTab = SettingsTab.SPOTIFY,
+                    section = "Spotify",
+                    type = EntryType.ACTION,
+                )
+            )
+            add(
+                SettingsEntry(
+                    id = "spotify.import",
+                    title = "Your Spotify Playlists",
+                    subtitle = "Import your Spotify playlists and Liked Songs into this app's library",
+                    keywords = listOf(
+                        "spotify playlist", "import playlist", "my playlists", "liked songs",
+                        "spotify library", "import from spotify"
+                    ),
+                    icon = Icons.Filled.QueueMusic,
+                    iconContainer = { MaterialTheme.colorScheme.secondaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onSecondaryContainer },
+                    parentTab = SettingsTab.SPOTIFY,
                     section = "Spotify",
                     type = EntryType.ACTION,
                 )
@@ -918,24 +970,72 @@ object SettingsSearchIndex {
                     icon = Icons.Filled.SmartDisplay,
                     iconContainer = { MaterialTheme.colorScheme.secondaryContainer },
                     iconTint = { MaterialTheme.colorScheme.onSecondaryContainer },
-                    parentTab = SettingsTab.YOUTUBE,
+                    parentTab = SettingsTab.SPOTIFY,
                     section = "Spotify",
                     type = EntryType.TOGGLE,
                 )
             )
             add(
                 SettingsEntry(
-                    id = "spotify.sync_liked",
-                    title = "Sync Liked Songs with Spotify",
-                    subtitle = "Automatically like and unlike songs in your Spotify library when favorited in LastWave",
+                    id = "spotify.prefer_canvas",
+                    title = "Prefer Spotify Canvas",
+                    subtitle = "Ask Spotify first, before Apple Music, Tidal and community artwork",
                     keywords = listOf(
-                        "spotify sync", "liked songs", "sync favorites", "favorite songs", "spotify library"
+                        "spotify canvas", "prefer", "priority", "first", "apple music", "tidal"
                     ),
-                    icon = Icons.Filled.Favorite,
+                    icon = Icons.Filled.AutoAwesome,
+                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
+                    parentTab = SettingsTab.SPOTIFY,
+                    section = "Spotify",
+                    type = EntryType.TOGGLE,
+                )
+            )
+            add(
+                SettingsEntry(
+                    id = "spotify.token",
+                    title = "Import sp_dc token",
+                    subtitle = "Paste a session cookie from your browser instead of signing in here",
+                    keywords = listOf(
+                        "sp_dc", "cookie", "token", "paste", "import", "session", "spotify login"
+                    ),
+                    icon = Icons.Filled.Key,
                     iconContainer = { MaterialTheme.colorScheme.tertiaryContainer },
                     iconTint = { MaterialTheme.colorScheme.onTertiaryContainer },
+                    parentTab = SettingsTab.SPOTIFY,
+                    section = "Session Token",
+                    type = EntryType.ACTION,
+                )
+            )
+            add(
+                SettingsEntry(
+                    id = "liked.local",
+                    title = "Save to Liked Songs",
+                    subtitle = "Keep a Liked Songs list in this app",
+                    keywords = listOf(
+                        "liked songs", "like", "heart", "favorite", "favourites", "local playlist"
+                    ),
+                    icon = Icons.Filled.Favorite,
+                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
                     parentTab = SettingsTab.YOUTUBE,
-                    section = "Spotify",
+                    section = "Liked Songs",
+                    type = EntryType.TOGGLE,
+                )
+            )
+            add(
+                SettingsEntry(
+                    id = "liked.youtube",
+                    title = "Sync Liked Songs to YouTube Music",
+                    subtitle = "Also mark liked songs as liked on YouTube Music",
+                    keywords = listOf(
+                        "liked songs", "sync", "youtube music", "like", "heart", "favorite"
+                    ),
+                    icon = Icons.Filled.CloudSync,
+                    iconContainer = { MaterialTheme.colorScheme.secondaryContainer },
+                    iconTint = { MaterialTheme.colorScheme.onSecondaryContainer },
+                    parentTab = SettingsTab.YOUTUBE,
+                    section = "Liked Songs",
                     type = EntryType.TOGGLE,
                 )
             )

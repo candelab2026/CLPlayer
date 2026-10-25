@@ -19,18 +19,30 @@ data class CanvasRequest(
 @Serializable
 data class CanvasResponse(
     @ProtoNumber(1) val canvases: List<CanvasItem> = emptyList(),
+    @ProtoNumber(2) val ttlInSeconds: Long? = null,
 ) {
     @Serializable
     data class CanvasItem(
         @ProtoNumber(1) val id: String? = null,
         @ProtoNumber(2) val canvasUrl: String? = null,
         @ProtoNumber(5) val trackUri: String? = null,
-        @ProtoNumber(8) val artist: ArtistItem? = null,
+        @ProtoNumber(6) val artist: ArtistItem? = null,
+        @ProtoNumber(9) val otherId: String? = null,
+        @ProtoNumber(11) val canvasUri: String? = null,
+        @ProtoNumber(13) val thumbsOfCanva: List<ThumbOfCanva>? = null,
     ) {
         @Serializable
         data class ArtistItem(
             @ProtoNumber(1) val artistUri: String? = null,
             @ProtoNumber(2) val artistName: String? = null,
+            @ProtoNumber(3) val artistImgUrl: String? = null,
+        )
+
+        @Serializable
+        data class ThumbOfCanva(
+            @ProtoNumber(1) val height: Int? = null,
+            @ProtoNumber(2) val width: Int? = null,
+            @ProtoNumber(3) val url: String? = null,
         )
     }
 }
@@ -39,19 +51,29 @@ data class CanvasResponse(
 data class ClientTokenRequest(
     val client_data: ClientData = ClientData(),
 ) {
+    /**
+     * The client profile the client-token endpoint is asked about.
+     *
+     * Every field here describes one browser, and the endpoint compares the set against
+     * itself: a profile with an unknown brand and no device type is not a browser anyone
+     * has, so it is the one profile that answers least often. The device id is filled in
+     * per install rather than shared, so two installs do not present as one device.
+     */
     @Serializable
     data class ClientData(
-        val client_version: String = "1.3.7.1345.gcff6cec98b6e",
+        val client_version: String = "1.2.62.476.g2ad6e7f3",
         val client_id: String = "d8a5ed958d274c2e8ee717e6a4b0971d",
         val js_sdk_data: JsSdkData = JsSdkData(),
     )
 
     @Serializable
     data class JsSdkData(
-        val device_brand: String = "unknown",
+        val device_brand: String = "Apple",
         val device_model: String = "unknown",
-        val os: String = "windows",
-        val os_version: String = "10.0.0",
+        val os: String = "macos",
+        val os_version: String = "10.15.7",
+        val device_id: String = "",
+        val device_type: String = "computer",
     )
 }
 
@@ -143,6 +165,10 @@ data class SpotifySearchResponse(
                             val artists: Artists? = null,
                             val duration: Duration? = null,
                         ) {
+                            val resolvedId: String?
+                                get() = id?.takeIf { it.isNotBlank() }
+                                    ?: uri?.removePrefix("spotify:track:")?.takeIf { it.isNotBlank() }
+
                             @Serializable
                             data class Duration(
                                 val totalMilliseconds: Int? = null,

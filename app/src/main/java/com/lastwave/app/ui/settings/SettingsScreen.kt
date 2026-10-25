@@ -19,8 +19,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import com.lastwave.app.ui.jam.LastWaveJamSheet
+import com.lastwave.app.ui.jam.LastWaveJamViewModel
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -144,6 +147,16 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -176,6 +189,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -243,6 +257,14 @@ private val ACCENT_PRESETS = listOf(
     AccentPreset("Rose", "#E0507A"),
 )
 
+data class ToggleDetailInfo(
+    val title: String,
+    val subtitle: String,
+    val checked: Boolean,
+)
+
+val LocalToggleDetailViewer = staticCompositionLocalOf<((ToggleDetailInfo) -> Unit)?> { null }
+
 // -- Expressive shape scale used only within this screen --
 private val CardOuterShape = RoundedCornerShape(28.dp)
 private val IconBadgeShape = RoundedCornerShape(14.dp)
@@ -305,7 +327,8 @@ private fun getTargetSectionIndex(settingId: String?): Int {
             "Canvas" -> 3
             else -> 0
         }
-        SettingsTab.YOUTUBE -> if (entry.section == "Spotify") 1 else 0
+        SettingsTab.YOUTUBE -> if (entry.section == "Liked Songs") 1 else 0
+        SettingsTab.SPOTIFY -> 0
         SettingsTab.LIBRARY -> when (entry.section) {
             "Content" -> 1
             "Imports", "Imports & Addons", "Modules & Addons" -> 2
@@ -402,9 +425,16 @@ enum class SettingsTab(
     YOUTUBE(
         titleRes = R.string.set_cat_yt,
         subtitleRes = R.string.set_cat_yt_sub,
-        title = "YouTube & Spotify",
-        subtitle = "Account connection, Spotify Canvas, Library sync, Channels",
+        title = "YouTube & Sync",
+        subtitle = "Account connection, 24/7 Library sync, Channels, History",
         icon = Icons.Filled.CloudSync,
+    ),
+    SPOTIFY(
+        titleRes = R.string.set_cat_spotify,
+        subtitleRes = R.string.set_cat_spotify_sub,
+        title = "Spotify",
+        subtitle = "Account connection, Canvas, Playlist imports & Liked Songs sync",
+        icon = Icons.Filled.PlayCircle,
     ),
     LAST_FM(
         titleRes = R.string.set_cat_lfm,
@@ -449,9 +479,12 @@ fun SettingsScreen(
     onOpenYouTubeLogin: () -> Unit = {},
     onOpenExternalImport: () -> Unit = {},
     onOpenSpotifyLogin: () -> Unit = {},
+    onOpenSpotifyTokenImport: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
+    jamViewModel: LastWaveJamViewModel = hiltViewModel(),
 ) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val jamUiState by jamViewModel.uiState.collectAsStateWithLifecycle()
     val avatarUrl by viewModel.avatarUrl.collectAsStateWithLifecycle()
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     val misc by viewModel.misc.collectAsStateWithLifecycle()
@@ -469,6 +502,7 @@ fun SettingsScreen(
     val hiddenYtLibraryPlaylistIds by viewModel.hiddenYtLibraryPlaylistIds.collectAsStateWithLifecycle()
     val ytChannels by viewModel.ytChannels.collectAsStateWithLifecycle()
     val ytChannelsLoading by viewModel.ytChannelsLoading.collectAsStateWithLifecycle()
+    val spotifyConnected by viewModel.spotifyConnected.collectAsStateWithLifecycle()
     val eq by viewModel.equalizer.collectAsStateWithLifecycle()
     val usbExclusiveEnabled by viewModel.usbExclusiveEnabled.collectAsStateWithLifecycle()
     val internalDirectEnabled by viewModel.internalDirectEnabled.collectAsStateWithLifecycle()
@@ -511,8 +545,11 @@ fun SettingsScreen(
     var showYtLibraryVisibilitySheet by remember { mutableStateOf(false) }
     var showYtChannelSheet by remember { mutableStateOf(false) }
     var showYtDisconnectConfirm by remember { mutableStateOf(false) }
+    var showSpotifyDisconnectConfirm by remember { mutableStateOf(false) }
     var showCookieLoginDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showJamSheet by remember { mutableStateOf(false) }
+    var activeToggleDetail by remember { mutableStateOf<ToggleDetailInfo?>(null) }
     val currentLanguage = remember(misc.appLanguageTag) { AppLanguage.fromTag(misc.appLanguageTag) }
 
     // Sends the user to Android's own Notification Listener access screen
@@ -545,9 +582,8 @@ fun SettingsScreen(
         if (uri != null) viewModel.exportBackup(uri, appVersionName(context))
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
+    CompositionLocalProvider(
+        LocalToggleDetailViewer provides { activeToggleDetail = it },
     ) {
         Column(
             Modifier
@@ -689,8 +725,29 @@ fun SettingsScreen(
                     null -> {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                SectionLabel("Collaboration & Social")
+                                SettingsGroup(rowCount = 1) { _, position ->
+                                    SettingsActionCard(
+                                        icon = Icons.Filled.Group,
+                                        iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        title = stringResource(R.string.settings_jam_title),
+                                        subtitle = if (jamUiState.isConnected) {
+                                            "In Session: #${jamUiState.roomCode} \u2022 ${jamUiState.participants.size} listening together"
+                                        } else {
+                                            stringResource(R.string.settings_jam_sub)
+                                        },
+                                        onClick = { showJamSheet = true },
+                                        position = position,
+                                    )
+                                }
+                            }
+                        }
+
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 SectionLabel("Services & Add-ons")
-                                SettingsGroup(rowCount = 3) { index, position ->
+                                SettingsGroup(rowCount = 4) { index, position ->
                                     when (index) {
                                         0 -> SettingsActionCard(
                                             icon = Icons.Filled.Extension,
@@ -711,17 +768,30 @@ fun SettingsScreen(
                                             onClick = { activeTab = SettingsTab.LAST_FM },
                                             position = position,
                                         )
-                                        else -> SettingsActionCard(
+                                        2 -> SettingsActionCard(
                                             icon = Icons.Filled.CloudSync,
                                             iconContainer = MaterialTheme.colorScheme.secondaryContainer,
                                             iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                                             title = stringResource(R.string.set_cat_yt),
                                             subtitle = if (ytConnection.isConnected) {
-                                                "Connected as ${ytConnection.accountName} \u2022 Spotify & 24/7 sync"
+                                                "Connected as ${ytConnection.accountName} • 24/7 library sync"
                                             } else {
-                                                "YouTube Music & Spotify accounts, Canvas, 24/7 sync"
+                                                "YouTube Music account, channels, history & 24/7 sync"
                                             },
                                             onClick = { activeTab = SettingsTab.YOUTUBE },
+                                            position = position,
+                                        )
+                                        else -> SettingsActionCard(
+                                            icon = Icons.Filled.PlayCircle,
+                                            iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            title = stringResource(R.string.set_cat_spotify),
+                                            subtitle = if (spotifyConnected) {
+                                                "Connected (sp_dc) • Canvas, playlist imports & Liked Songs sync"
+                                            } else {
+                                                "Account connection, Canvas, playlist imports & Liked Songs sync"
+                                            },
+                                            onClick = { activeTab = SettingsTab.SPOTIFY },
                                             position = position,
                                         )
                                     }
@@ -1152,7 +1222,7 @@ fun SettingsScreen(
                         item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     SectionLabel(stringResource(R.string.settings_section_appearance))
-                    SettingsGroup(rowCount = 8) { index, position ->
+                    SettingsGroup(rowCount = 10) { index, position ->
                         when (index) {
                             0 -> ThemeModeSelectorCard(
                                 currentThemeMode = theme?.themeMode ?: ThemeMode.SYSTEM,
@@ -1161,6 +1231,17 @@ fun SettingsScreen(
                                 isHighlighted = (highlightedSettingId == "appearance.theme_mode"),
                             )
                             1 -> SettingsToggleCard(
+                                icon = Icons.Filled.AutoAwesome,
+                                iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                title = stringResource(R.string.settings_lastwave_theme),
+                                subtitle = stringResource(R.string.settings_lastwave_theme_sub),
+                                checked = theme?.isLastWaveTheme ?: false,
+                                onCheckedChange = viewModel::setLastWaveTheme,
+                                position = position,
+                                isHighlighted = (highlightedSettingId == "appearance.lastwave_theme"),
+                            )
+                            2 -> SettingsToggleCard(
                                 icon = Icons.Filled.Contrast,
                                 iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -1172,20 +1253,23 @@ fun SettingsScreen(
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.amoled"),
                             )
-                            2 -> SettingsToggleCard(
+                            3 -> SettingsToggleCard(
                                 icon = Icons.Filled.Palette,
                                 iconContainer = MaterialTheme.colorScheme.primaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 title = stringResource(R.string.settings_dynamic_color),
                                 subtitle = stringResource(R.string.settings_dynamic_color_sub),
-                                checked = theme?.mode == AccentMode.DYNAMIC,
+                                checked = theme?.mode == AccentMode.DYNAMIC && !(theme?.isLastWaveTheme ?: false),
                                 onCheckedChange = { enabled ->
+                                    if (enabled && (theme?.isLastWaveTheme == true)) {
+                                        viewModel.setLastWaveTheme(false)
+                                    }
                                     viewModel.setAccentMode(if (enabled) AccentMode.DYNAMIC else AccentMode.MANUAL)
                                 },
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.dynamic_color"),
                             )
-                            3 -> SettingsToggleCard(
+                            4 -> SettingsToggleCard(
                                 icon = Icons.Filled.BubbleChart,
                                 iconContainer = MaterialTheme.colorScheme.primaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -1196,7 +1280,7 @@ fun SettingsScreen(
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.liquid_glass"),
                             )
-                            4 -> SettingsToggleCard(
+                            5 -> SettingsToggleCard(
                                 icon = Icons.Filled.Apps,
                                 iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -1207,7 +1291,18 @@ fun SettingsScreen(
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.md3_nav_bar"),
                             )
-                            5 -> SettingsToggleCard(
+                            6 -> SettingsToggleCard(
+                                icon = Icons.Filled.VisibilityOff,
+                                iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                title = stringResource(R.string.settings_hide_nav_tabs),
+                                subtitle = stringResource(R.string.settings_hide_nav_tabs_sub),
+                                checked = theme?.hideNavTabs ?: false,
+                                onCheckedChange = viewModel::setHideNavTabs,
+                                position = position,
+                                isHighlighted = (highlightedSettingId == "appearance.hide_nav_tabs"),
+                            )
+                            7 -> SettingsToggleCard(
                                 icon = Icons.Filled.Album,
                                 iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -1218,7 +1313,7 @@ fun SettingsScreen(
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.dynamic_now_playing"),
                             )
-                            6 -> SettingsToggleCard(
+                            8 -> SettingsToggleCard(
                                 icon = Icons.Filled.TextFields,
                                 iconContainer = MaterialTheme.colorScheme.secondaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1229,7 +1324,7 @@ fun SettingsScreen(
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.app_font"),
                             )
-                            7 -> SettingsActionCard(
+                            9 -> SettingsActionCard(
                                 icon = Icons.Filled.Dashboard,
                                 iconContainer = MaterialTheme.colorScheme.primaryContainer,
                                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -1269,8 +1364,18 @@ fun SettingsScreen(
                             AccentPresetGrid(
                                 currentMode = theme?.mode ?: AccentMode.MANUAL,
                                 selectedHex = theme?.accentColorHex,
-                                onPickPreset = { hex -> viewModel.setManualAccent(Color(android.graphics.Color.parseColor(hex))) },
-                                onPickMono = { viewModel.setAccentMode(AccentMode.MONOCHROME) },
+                                onPickPreset = { hex ->
+                                    if (theme?.isLastWaveTheme == true) {
+                                        viewModel.setLastWaveTheme(false)
+                                    }
+                                    viewModel.setManualAccent(Color(android.graphics.Color.parseColor(hex)))
+                                },
+                                onPickMono = {
+                                    if (theme?.isLastWaveTheme == true) {
+                                        viewModel.setLastWaveTheme(false)
+                                    }
+                                    viewModel.setAccentMode(AccentMode.MONOCHROME)
+                                },
                                 onPickCustom = viewModel::openColorWheel,
                             )
                         }
@@ -1281,7 +1386,7 @@ fun SettingsScreen(
                         item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     SectionLabel(stringResource(R.string.settings_section_experimental))
-                    SettingsGroup(rowCount = 9) { index, position ->
+                    SettingsGroup(rowCount = 10) { index, position ->
                         when (index) {
                             0 -> SettingsToggleCard(
                                 icon = Icons.Filled.Lyrics,
@@ -1420,6 +1525,21 @@ fun SettingsScreen(
                                 onClick = { showTranslationLanguageDialog = true },
                                 position = position,
                                 isHighlighted = (highlightedSettingId == "appearance.translation_language"),
+                            )
+                            9 -> SettingsToggleCard(
+                                icon = Icons.Filled.SmartDisplay,
+                                iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                title = stringResource(R.string.settings_music_video),
+                                subtitle = if (misc.musicVideoEnabled) {
+                                    stringResource(R.string.settings_music_video_on)
+                                } else {
+                                    stringResource(R.string.settings_music_video_off)
+                                },
+                                checked = misc.musicVideoEnabled,
+                                onCheckedChange = viewModel::setMusicVideoEnabled,
+                                position = position,
+                                isHighlighted = (highlightedSettingId == "appearance.music_video"),
                             )
                         }
                     }
@@ -1643,53 +1763,129 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                SectionLabel("Liked Songs")
+                                val likedLocalSync by viewModel.likedSongsLocalSync.collectAsStateWithLifecycle()
+                                val likedYouTubeSync by viewModel.likedSongsYouTubeSync.collectAsStateWithLifecycle()
+                                SettingsGroup(rowCount = 2) { index, position ->
+                                    when (index) {
+                                        0 -> SettingsToggleCard(
+                                            icon = Icons.Filled.Favorite,
+                                            iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            title = "Save to Liked Songs",
+                                            subtitle = "Keep a Liked Songs list in this app",
+                                            checked = likedLocalSync,
+                                            onCheckedChange = viewModel::setLikedSongsLocalSync,
+                                            position = position,
+                                            isHighlighted = (highlightedSettingId == "liked.local"),
+                                        )
+                                        else -> SettingsToggleCard(
+                                            icon = Icons.Filled.CloudSync,
+                                            iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            title = "Sync Liked Songs to YouTube Music",
+                                            subtitle = if (ytConnection.isConnected) {
+                                                "Also mark liked songs as liked on YouTube Music"
+                                            } else {
+                                                "Connect a YouTube Music account to mirror your likes"
+                                            },
+                                            checked = likedYouTubeSync,
+                                            onCheckedChange = viewModel::setLikedSongsYouTubeSync,
+                                            position = position,
+                                            isHighlighted = (highlightedSettingId == "liked.youtube"),
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SectionLabel("Spotify")
-                    val spotifyConnected by viewModel.spotifyConnected.collectAsStateWithLifecycle()
-                    val spotifyCanvasEnabled by viewModel.spotifyCanvasEnabled.collectAsStateWithLifecycle()
-                    val spotifySyncLikedEnabled by viewModel.spotifySyncLikedSongsEnabled.collectAsStateWithLifecycle()
-                    SettingsGroup(rowCount = if (spotifyConnected) 3 else 2) { index, position ->
-                        when (index) {
-                            0 -> SettingsActionCard(
-                                icon = Icons.Filled.PlayCircle,
-                                iconContainer = if (spotifyConnected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                iconTint = if (spotifyConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                title = if (spotifyConnected) "Spotify Account Connected" else "Connect Spotify Account",
-                                subtitle = if (spotifyConnected) "Connected (sp_dc). Tap to reconnect or manage session." else "Sign in to enable official Spotify Canvas video loops & library sync",
-                                onClick = onOpenSpotifyLogin,
-                                position = position,
-                                isHighlighted = (highlightedSettingId == "spotify.account"),
-                            )
-                            1 -> SettingsToggleCard(
-                                icon = Icons.Filled.SmartDisplay,
-                                iconContainer = MaterialTheme.colorScheme.secondaryContainer,
-                                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                title = "Spotify Canvas (Looping background videos)",
-                                subtitle = "Fetch and play Spotify's looping visual videos in background",
-                                checked = spotifyCanvasEnabled,
-                                onCheckedChange = viewModel::setSpotifyCanvasEnabled,
-                                position = position,
-                                isHighlighted = (highlightedSettingId == "spotify.canvas"),
-                            )
-                            2 -> SettingsToggleCard(
-                                icon = Icons.Filled.Favorite,
-                                iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
-                                iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                title = "Sync Liked Songs with Spotify",
-                                subtitle = "Automatically like and unlike songs in your Spotify library when favorited in LastWave",
-                                checked = spotifySyncLikedEnabled,
-                                onCheckedChange = viewModel::setSpotifySyncLikedSongsEnabled,
-                                position = position,
-                                isHighlighted = (highlightedSettingId == "spotify.sync_liked"),
-                            )
+        }
+
+                    SettingsTab.SPOTIFY -> {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                SectionLabel("Spotify")
+                                val spotifyCanvasEnabled by viewModel.spotifyCanvasEnabled.collectAsStateWithLifecycle()
+                                val spotifyPreferCanvas by viewModel.spotifyPreferCanvas.collectAsStateWithLifecycle()
+                                SettingsGroup(rowCount = if (spotifyConnected) 4 else 3) { index, position ->
+                                    when (index) {
+                                        0 -> if (spotifyConnected) {
+                                            SpotifyAccountRow(
+                                                onDisconnect = { showSpotifyDisconnectConfirm = true },
+                                                onClick = onOpenSpotifyLogin,
+                                                position = position,
+                                                isHighlighted = (highlightedSettingId == "spotify.account"),
+                                            )
+                                        } else {
+                                            SettingsActionCard(
+                                                icon = Icons.Filled.PlayCircle,
+                                                iconContainer = MaterialTheme.colorScheme.surfaceVariant,
+                                                iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                title = "Connect Spotify Account",
+                                                subtitle = "Sign in to enable official Spotify Canvas video loops & library sync",
+                                                onClick = onOpenSpotifyLogin,
+                                                position = position,
+                                                isHighlighted = (highlightedSettingId == "spotify.account"),
+                                            )
+                                        }
+                                        1 -> SettingsActionCard(
+                                            icon = Icons.Filled.QueueMusic,
+                                            iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            title = "Your Spotify Playlists",
+                                            subtitle = "Import your Spotify playlists and Liked Songs into this app's library",
+                                            onClick = onOpenExternalImport,
+                                            position = position,
+                                            isHighlighted = (highlightedSettingId == "spotify.import"),
+                                        )
+                                        2 -> SettingsToggleCard(
+                                            icon = Icons.Filled.SmartDisplay,
+                                            iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            title = "Spotify Canvas (Looping background videos)",
+                                            subtitle = "Fetch and play Spotify's looping visual videos in background",
+                                            checked = spotifyCanvasEnabled,
+                                            onCheckedChange = viewModel::setSpotifyCanvasEnabled,
+                                            position = position,
+                                            isHighlighted = (highlightedSettingId == "spotify.canvas"),
+                                        )
+                                        3 -> SettingsToggleCard(
+                                            icon = Icons.Filled.AutoAwesome,
+                                            iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                                            iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            title = "Prefer Spotify Canvas",
+                                            subtitle = "Ask Spotify first, before Apple Music, Tidal and community artwork",
+                                            checked = spotifyPreferCanvas,
+                                            onCheckedChange = viewModel::setSpotifyPreferCanvas,
+                                            position = position,
+                                            isHighlighted = (highlightedSettingId == "spotify.prefer_canvas"),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                SectionLabel("Session Token")
+                                SettingsGroup(rowCount = 1) { _, position ->
+                                    SettingsActionCard(
+                                        icon = Icons.Filled.Key,
+                                        iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
+                                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        title = "Import sp_dc token",
+                                        subtitle = "Paste a session cookie from your browser instead of signing in here",
+                                        onClick = onOpenSpotifyTokenImport,
+                                        position = position,
+                                        isHighlighted = (highlightedSettingId == "spotify.token"),
+                                    )
+                                }
+                            }
                         }
                     }
-                }
-            }
-        }
-    }
 
                     SettingsTab.LAST_FM -> {
                         item {
@@ -2137,6 +2333,37 @@ fun SettingsScreen(
         )
     }
 
+    // -- Spotify disconnect confirm --
+    if (showSpotifyDisconnectConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSpotifyDisconnectConfirm = false },
+            title = { Text("Disconnect Spotify?") },
+            text = { Text("This will remove your Spotify session and log you out. Spotify Canvas loops and synced playlists will be disabled until you reconnect.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSpotifyDisconnectConfirm = false
+                    viewModel.disconnectSpotify()
+                    runCatching {
+                        val cm = android.webkit.CookieManager.getInstance()
+                        for (domain in listOf("https://spotify.com", "https://accounts.spotify.com", "https://open.spotify.com")) {
+                            val cookies = cm.getCookie(domain) ?: continue
+                            for (cookie in cookies.split(";")) {
+                                val name = cookie.substringBefore("=").trim()
+                                if (name.isNotEmpty()) {
+                                    cm.setCookie(domain, "$name=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/")
+                                }
+                            }
+                        }
+                        cm.flush()
+                    }
+                }) { Text(stringResource(R.string.common_disconnect)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSpotifyDisconnectConfirm = false }) { Text(stringResource(R.string.common_cancel)) }
+            },
+        )
+    }
+
     if (showCookieLoginDialog) {
         CookieLoginDialog(
             onDismiss = { showCookieLoginDialog = false },
@@ -2264,6 +2491,13 @@ fun SettingsScreen(
 
     if (showAutoEq) {
         com.lastwave.app.ui.settings.autoeq.AutoEqDialog(onDismiss = { showAutoEq = false })
+    }
+
+    if (showJamSheet) {
+        LastWaveJamSheet(
+            viewModel = jamViewModel,
+            onDismiss = { showJamSheet = false },
+        )
     }
 
     // -- Experimental 15-band equalizer --
@@ -2728,6 +2962,103 @@ fun SettingsScreen(
             }
         }
     }
+
+    if (activeToggleDetail != null) {
+        val detail = activeToggleDetail!!
+        Dialog(
+            onDismissRequest = { activeToggleDetail = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .blur(16.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { activeToggleDetail = null },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.88f)
+                        .widthIn(max = 420.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        ),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (detail.checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                modifier = Modifier.size(44.dp),
+                            ) {
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Icon(
+                                        imageVector = if (detail.checked) Icons.Filled.Check else Icons.Filled.Info,
+                                        contentDescription = null,
+                                        tint = if (detail.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (detail.checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                            ) {
+                                Text(
+                                    text = if (detail.checked) "Enabled" else "Disabled",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (detail.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = detail.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = detail.subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 22.sp,
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        FilledTonalButton(
+                            onClick = { activeToggleDetail = null },
+                            modifier = Modifier.align(Alignment.End),
+                            shape = CircleShape,
+                        ) {
+                            Text("Close", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 private fun appVersionName(context: android.content.Context): String = try {
@@ -2774,6 +3105,19 @@ private fun IconBadge(icon: ImageVector, container: Color, tint: Color, modifier
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun IconBadge(painter: Painter, container: Color, tint: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(44.dp)
+            .clip(IconBadgeShape)
+            .background(container),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painter, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -2848,6 +3192,98 @@ private fun ThemeModeSelectorCard(
 
 @Composable
 private fun SettingsToggleCard(
+    painter: Painter,
+    iconContainer: Color,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    position: GroupPosition = GroupPosition.SINGLE,
+    enabled: Boolean = true,
+    isHighlighted: Boolean = false,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale = rememberPressScale(interactionSource)
+    val shape = groupShape(position)
+    val haptic = LocalHapticFeedback.current
+    val detailViewer = LocalToggleDetailViewer.current
+
+    Card(
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isHighlighted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                val s = if (enabled) scale else 1f
+                scaleX = s
+                scaleY = s
+            }
+            .settingHighlightGlow(isHighlighted = isHighlighted, shape = shape)
+            .clip(shape)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.material3.ripple(),
+                enabled = enabled,
+                onClick = { onCheckedChange(!checked) },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    detailViewer?.invoke(ToggleDetailInfo(title, subtitle, checked))
+                },
+            ),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBadge(
+                painter,
+                if (enabled) iconContainer else iconContainer.copy(alpha = 0.5f),
+                if (enabled) iconTint else iconTint.copy(alpha = 0.5f),
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Switch(
+                checked = checked,
+                enabled = enabled,
+                onCheckedChange = if (enabled) onCheckedChange else null,
+                thumbContent = if (checked) {
+                    {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else null,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleCard(
     icon: ImageVector,
     iconContainer: Color,
     iconTint: Color,
@@ -2862,21 +3298,35 @@ private fun SettingsToggleCard(
     val interactionSource = remember { MutableInteractionSource() }
     val scale = rememberPressScale(interactionSource)
     val shape = groupShape(position)
+    val haptic = LocalHapticFeedback.current
+    val detailViewer = LocalToggleDetailViewer.current
 
     Card(
-        onClick = { if (enabled) onCheckedChange(!checked) },
         shape = shape,
-        enabled = enabled,
         colors = CardDefaults.cardColors(
             containerColor = if (isHighlighted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceContainerHigh,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .scale(if (enabled) scale else 1f)
-            .settingHighlightGlow(isHighlighted = isHighlighted, shape = shape),
+            .graphicsLayer {
+                val s = if (enabled) scale else 1f
+                scaleX = s
+                scaleY = s
+            }
+            .settingHighlightGlow(isHighlighted = isHighlighted, shape = shape)
+            .clip(shape)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.material3.ripple(),
+                enabled = enabled,
+                onClick = { onCheckedChange(!checked) },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    detailViewer?.invoke(ToggleDetailInfo(title, subtitle, checked))
+                },
+            ),
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -3046,7 +3496,10 @@ private fun SettingsActionCard(
         interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .scale(scale)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .settingHighlightGlow(isHighlighted = isHighlighted, shape = shape),
     ) {
         Row(
@@ -3235,7 +3688,10 @@ private fun SearchResultCard(
         interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .scale(scale),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
     ) {
         Column(
             modifier = Modifier
@@ -3389,6 +3845,69 @@ private fun YouTubeAccountRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            }
+            Spacer(Modifier.width(8.dp))
+            FilledTonalIconButton(
+                onClick = onDisconnect,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                ),
+            ) {
+                Icon(Icons.Filled.Logout, contentDescription = stringResource(R.string.set_disconnect_cd))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpotifyAccountRow(
+    onDisconnect: () -> Unit,
+    onClick: () -> Unit,
+    position: GroupPosition,
+    isHighlighted: Boolean = false,
+) {
+    val shape = groupShape(position)
+    Card(
+        onClick = onClick,
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isHighlighted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .settingHighlightGlow(isHighlighted = isHighlighted, shape = shape),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBadge(
+                Icons.Filled.PlayCircle,
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "Spotify Account",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "Connected (sp_dc)",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                Text(
+                    "Tap to manage session",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Spacer(Modifier.width(8.dp))
             FilledTonalIconButton(
@@ -3826,7 +4345,10 @@ private fun ColorTile(
     val tileShape = RoundedCornerShape(20.dp)
 
     Column(
-        modifier = modifier.scale(scale),
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -3932,7 +4454,7 @@ private fun AboutCard(versionName: String) {
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                "Built with the Last.fm API",
+                "Build With Love ♥️ By - ℘ꪊᦓᛕꪖ᥅",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

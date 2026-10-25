@@ -138,6 +138,23 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
                 ),
             )
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            runCatching {
+                val currentDisplay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display
+                } else {
+                    @Suppress("DEPRECATION")
+                    windowManager.defaultDisplay
+                }
+                val modes = currentDisplay?.supportedModes
+                val maxRefreshMode = modes?.maxByOrNull { it.refreshRate }
+                if (maxRefreshMode != null && maxRefreshMode.refreshRate > 60f) {
+                    val params = window.attributes
+                    params.preferredDisplayModeId = maxRefreshMode.modeId
+                    window.attributes = params
+                }
+            }
+        }
         if (savedInstanceState == null) {
             val needsNotificationPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -169,7 +186,7 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
                 ) {
                     val navController = rememberNavController()
                     val backStackEntry by navController.currentBackStackEntryAsState()
-                    val hasBottomNavigation = backStackEntry?.destination?.route == Screen.MainShell.route
+                    val hasBottomNavigation = backStackEntry?.destination?.route == Screen.MainShell.route && !themeState.hideNavTabs
 
                     PlayerHost(hasBottomNavigation = hasBottomNavigation) {
                         LastWaveNavHost(navController)
@@ -283,6 +300,12 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
 
     private fun handleNavigationIntent(intent: Intent?) {
         if (intent == null) return
+        val uri = intent.data
+        if (uri?.scheme == "lastwave" && (uri.host == "jam" || uri.host == "sync")) {
+            val code = uri.getQueryParameter("code")
+            runCatching { appRouteNavigator.get().navigateTo(Screen.Jam.createRoute(code)) }
+            return
+        }
         val isDownloadsTarget = intent.action == com.lastwave.app.data.download.TrackDownloadManager.ACTION_VIEW_DOWNLOADS ||
             intent.getStringExtra(com.lastwave.app.data.download.TrackDownloadManager.EXTRA_NAVIGATE_TO) == Screen.Downloads.route
         if (isDownloadsTarget) {
