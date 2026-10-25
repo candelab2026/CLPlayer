@@ -434,16 +434,16 @@ class SpotifyPlaylistImporter @Inject constructor(
         )
     }
 
-    /** Depth-first walk over the parsed JSON tree, visiting every object once. */
+    /** Depth-first walk over the parsed JSON tree in document order, visiting every object once. */
     private fun walk(root: JsonElement, visit: (JsonObject) -> Unit) {
         val pending = mutableListOf(root)
         while (pending.isNotEmpty()) {
             when (val current = pending.removeAt(pending.size - 1)) {
                 is JsonObject -> {
                     visit(current)
-                    pending.addAll(current.values)
+                    pending.addAll(current.values.reversed())
                 }
-                is JsonArray -> pending.addAll(current)
+                is JsonArray -> pending.addAll(current.reversed())
                 else -> Unit
             }
         }
