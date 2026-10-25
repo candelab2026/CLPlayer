@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LastWave</string>
-    <string name="widget_name">LastWave 播放器</string>
+    <string name="app_name">CLPlayer</string>
+    <string name="widget_name">CLPlayer 播放器</string>
     <string name="widget_description">所有媒体应用的封面、曲目信息和播放控制</string>
 
     <!-- 底部导航 -->
@@ -12,7 +12,7 @@
     <string name="update_available">有可用更新</string>
     <string name="update">更新</string>
     <string name="dismiss_update">忽略更新</string>
-    <string name="update_ready_to_install">LastWave v%1$s 已就绪，可安装</string>
+    <string name="update_ready_to_install">CLPlayer v%1$s 已就绪，可安装</string>
 
     <!-- 设置 -->
     <string name="settings">设置</string>
@@ -119,7 +119,7 @@
     <string name="dialog_clear_all_text">这将删除您的凭据、歌单和缓存数据，且无法撤销。</string>
     <string name="dialog_clear_all_confirm">全部清除</string>
     <string name="dialog_disconnect_yt_title">断开 YouTube Music？</string>
-    <string name="dialog_disconnect_yt_text">已同步到您账号的歌单会保留，但 LastWave 将停止同步并忘记该连接。</string>
+    <string name="dialog_disconnect_yt_text">已同步到您账号的歌单会保留，但 CLPlayer 将停止同步并忘记该连接。</string>
     <string name="dialog_logout_title">退出 Last.fm？</string>
     <string name="dialog_logout_text">您的歌单和缓存数据将被保留。</string>
     <string name="common_save">保存</string>
@@ -262,7 +262,7 @@
     <string name="desc_repeat">重复</string>
     <string name="desc_play_pause">播放或暂停</string>
 
-    <string name="widget_obsidian_name">LastWave 黑曜石玻璃</string>
+    <string name="widget_obsidian_name">CLPlayer 黑曜石玻璃</string>
     <string name="widget_obsidian_description">磨砂黑曜石玻璃播放器，具有半透明深度和水晶边缘</string>
     <string name="nav_generator">发电机</string>
     <string name="settings_downloads_sub_custom">%1$d 歌曲 • %2$s • %3$s</string>
@@ -767,7 +767,7 @@
     <string name="set_lfm_disc_title">断开Last.fm？</string>
     <string name="set_lfm_disc_text">全球乱序暂停。您的统计信息切换到本地收听历史记录 - 没有删除任何内容。</string>
     <string name="set_lfm_disc_btn">断开连接</string>
-    <string name="set_about_title">LastWave</string>
+    <string name="set_about_title">CLPlayer</string>
     <string name="set_color_title">定制颜色</string>
     <string name="set_hue">色调</string>
     <string name="set_sat">饱和度</string>
@@ -776,7 +776,7 @@
     <string name="set_eq_enable">启用均衡器</string>
     <string name="set_eq_custom">定制</string>
     <string name="set_yt_channel">YouTube 频道</string>
-    <string name="set_yt_channel_sub">选择 LastWave 使用哪个频道的库、喜欢和历史记录</string>
+    <string name="set_yt_channel_sub">选择 CLPlayer 使用哪个频道的库、喜欢和历史记录</string>
     <string name="set_yt_loading">正在加载频道...</string>
     <string name="set_yt_empty_title">没有找到频道</string>
     <string name="set_yt_empty_sub">检查您的连接，然后重试。</string>
@@ -814,11 +814,11 @@
     <string name="set_usb_old">需要 Android 10 或更高版本</string>
     <string name="set_usb_on">将usbdevfs 直接连接到DAC • Bit-Perfect 自动启用此功能</string>
     <string name="set_usb_off">关 • 需要 USB DAC 和 Bit-Perfect（或此切换）</string>
-    <string name="set_yt_hist_on">• 您在LastWave 中收听的歌曲（包括无损歌曲和下载歌曲）会出现在您的YouTube Music 历史记录中</string>
-    <string name="set_yt_hist_off">关闭 • 在 LastWave 中收听不会出现在您的 YouTube Music 历史记录中</string>
+    <string name="set_yt_hist_on">• 您在CLPlayer 中收听的歌曲（包括无损歌曲和下载歌曲）会出现在您的YouTube Music 历史记录中</string>
+    <string name="set_yt_hist_off">关闭 • 在 CLPlayer 中收听不会出现在您的 YouTube Music 历史记录中</string>
     <string name="set_discord_title">不和谐丰富的存在</string>
     <string name="set_discord_on">• 您的曲目、质量和封面显示在您的 Discord 个人资料上</string>
-    <string name="set_discord_off">关闭 • LastWave 远离您的 Discord 个人资料</string>
+    <string name="set_discord_off">关闭 • CLPlayer 远离您的 Discord 个人资料</string>
     <string name="set_tg_sub">在 Telegram 上加入 @clashprojects</string>
     <string name="set_discord_support">不和谐支持</string>
     <string name="set_discord_support_sub">加入我们的 Discord 社区</string>
@@ -844,9 +844,9 @@
     <string name="toast_sync_fail">播放列表同步失败：%1$s</string>
     <string name="toast_synced">从本地 JSON 同步了 %1$d 播放列表</string>
     <string name="toast_restored">已恢复 %1$d 播放列表%2$s</string>
-    <string name="toast_newer_backup">此备份是使用较新版本的 LastWave 制作的</string>
-    <string name="toast_not_backup">该文件看起来不像 LastWave 备份</string>
-    <string name="toast_not_json">这不是 LastWave 备份或播放列表 JSON</string>
+    <string name="toast_newer_backup">此备份是使用较新版本的 CLPlayer 制作的</string>
+    <string name="toast_not_backup">该文件看起来不像 CLPlayer 备份</string>
+    <string name="toast_not_json">这不是 CLPlayer 备份或播放列表 JSON</string>
     <string name="toast_empty_file">所选文件为空或无法读取</string>
     <string name="toast_restore_fail">恢复失败：%1$s</string>
     <string name="toast_restore_read">恢复读取错误：%1$s</string>
@@ -1058,7 +1058,7 @@
     <string name="lyshare_mode_lyrics">歌词</string>
     <string name="lyshare_action_share">分享</string>
     <string name="lyshare_action_save">保存</string>
-    <string name="lyshare_saved_to_gallery">已保存至 Pictures/LastWave</string>
+    <string name="lyshare_saved_to_gallery">已保存至 Pictures/CLPlayer</string>
     <string name="lyshare_save_failed">保存图片失败</string>
     <string name="lyshare_share_failed">分享图片失败</string>
     <string name="lyshare_button_cd">分享歌词</string>
@@ -1073,7 +1073,7 @@
     <string name="lyshare_color_white">白色</string>
     <string name="lyshare_color_black">黑色</string>
     <string name="lyshare_color_accent">强调色</string>
-    <string name="lyshare_color_brand">LastWave 青柠</string>
+    <string name="lyshare_color_brand">CLPlayer 青柠</string>
     <string name="lyshare_accessibility_line_selected">已选中，第 %1$d 行（共 %2$d 行）</string>
     <string name="lyshare_accessibility_line_unselected">第 %1$d 行（共 %2$d 行）</string>
 </resources>

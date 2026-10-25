@@ -161,7 +161,7 @@ class YtMusicSyncManager @Inject constructor(
             var failed = 0
 
             // Deletion propagation: mappings whose local playlist vanished
-            // mean "deleted in LastWave" — delete the remote mirror too.
+            // mean "deleted in CLPlayer" — delete the remote mirror too.
             val liveIds = allPlaylists.mapTo(mutableSetOf()) { it.id }
             val orphans = mappings.keys.filterNot { it in liveIds }
             var removedAnyMapping = false

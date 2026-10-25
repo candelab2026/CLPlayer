@@ -102,7 +102,7 @@ class AppUpdateManager @Inject constructor(
             }
             try {
                 val request = Request.Builder()
-                    .url("https://api.github.com/repos/Clash-Projects/LastWave-native/releases/latest")
+                    .url("https://api.github.com/repos/candelab2026/CLPlayer/releases/latest")
                     .header("Accept", "application/vnd.github.v3+json")
                     .header("User-Agent", "LastWave-Android")
                     .build()
@@ -125,7 +125,7 @@ class AppUpdateManager @Inject constructor(
                 val body = response.body?.string().orEmpty()
                 val json = JSONObject(body)
                 val tagName = json.optString("tag_name", "")
-                val releaseUrl = json.optString("html_url", "https://github.com/Clash-Projects/LastWave-native/releases")
+                val releaseUrl = json.optString("html_url", "https://github.com/candelab2026/CLPlayer/releases")
                 val releaseNotes = json.optString("body", "")
 
                 val apkAssets = mutableListOf<ReleaseAsset>()
@@ -190,7 +190,7 @@ class AppUpdateManager @Inject constructor(
 
     fun openUpdate(context: Context) {
         val targetUrl = _updateInfo.value.downloadUrl ?: _updateInfo.value.releaseUrl.ifBlank {
-            "https://github.com/Clash-Projects/LastWave-native/releases"
+            "https://github.com/candelab2026/CLPlayer/releases"
         }
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -115,7 +115,7 @@ object AppLog {
     }
 
     private fun header(context: Context): String = buildString {
-        appendLine("LastWave ${versionName(context)} — operational log")
+        appendLine("CLPlayer ${versionName(context)} — operational log")
         appendLine("Session started ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())}")
     }
 

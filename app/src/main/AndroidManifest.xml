@@ -104,7 +104,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lastwave" android:host="auth-callback" />
+                <data android:scheme="clplayer" android:host="auth-callback" />
             </intent-filter>
 
             <!-- LastWave Jam deep links (lastwave://jam?code=... and lastwave://sync?code=...) -->
@@ -112,8 +112,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lastwave" android:host="jam" />
-                <data android:scheme="lastwave" android:host="sync" />
+                <data android:scheme="clplayer" android:host="jam" />
+                <data android:scheme="clplayer" android:host="sync" />
             </intent-filter>
 
             <!-- YouTube & YouTube Music deep links / Open With -->

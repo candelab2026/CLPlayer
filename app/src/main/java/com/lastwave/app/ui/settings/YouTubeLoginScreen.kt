@@ -287,7 +287,7 @@ fun YouTubeLoginScreen(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "LastWave never sees your password — sign-in happens entirely inside Google's page.",
+                        "CLPlayer never sees your password — sign-in happens entirely inside Google's page.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

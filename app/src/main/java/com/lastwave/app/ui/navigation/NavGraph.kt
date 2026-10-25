@@ -694,7 +694,7 @@ private fun LaunchGate() {
                 )
             }
             Spacer(Modifier.height(18.dp))
-            Text("LastWave", style = MaterialTheme.typography.headlineSmall)
+            Text("CLPlayer", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(20.dp))
             ExpressiveLoadingIndicator(message = "Preparing your music")
         }

@@ -430,7 +430,7 @@ object SettingsSearchIndex {
             add(
                 SettingsEntry(
                     id = "appearance.lastwave_theme",
-                    title = "LastWave Signature Theme",
+                    title = "CLPlayer Signature Theme",
                     subtitle = "Bespoke logo palette with Electric Lime and Obsidian Teal",
                     keywords = listOf(
                         "lastwave theme", "brand theme", "special theme", "logo theme", "lime",
@@ -878,7 +878,7 @@ object SettingsSearchIndex {
                 SettingsEntry(
                     id = "youtube.shown_playlists",
                     title = "Show / Hide Account Playlists",
-                    subtitle = "Control which playlists from your YouTube account appear in LastWave",
+                    subtitle = "Control which playlists from your YouTube account appear in CLPlayer",
                     keywords = listOf(
                         "show playlists", "hide playlists", "visibility", "account playlists",
                         "library visibility", "filter playlists"
@@ -1246,7 +1246,7 @@ object SettingsSearchIndex {
                 SettingsEntry(
                     id = "backup.restore",
                     title = "Restore from Backup",
-                    subtitle = "Import a previously saved LastWave backup file to restore settings & playlists",
+                    subtitle = "Import a previously saved CLPlayer backup file to restore settings & playlists",
                     keywords = listOf(
                         "restore", "import backup", "recover data", "load backup", "restore playlists",
                         "restore settings", "json restore"
@@ -1299,55 +1299,6 @@ object SettingsSearchIndex {
             )
             add(
                 SettingsEntry(
-                    id = "about.telegram_support",
-                    title = "Telegram Updates & Support",
-                    subtitle = "Join @clashprojects on Telegram for app news, beta builds, and support",
-                    keywords = listOf(
-                        "telegram", "support", "community", "chat", "clashprojects", "help",
-                        "updates channel", "news"
-                    ),
-                    icon = Icons.AutoMirrored.Filled.Send,
-                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
-                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
-                    parentTab = SettingsTab.ABOUT,
-                    section = "About & Community",
-                    type = EntryType.ACTION,
-                )
-            )
-            add(
-                SettingsEntry(
-                    id = "about.discord_support",
-                    title = "Discord Support",
-                    subtitle = "Join our Discord community server for support and feedback",
-                    keywords = listOf(
-                        "discord", "community", "chat", "support", "feedback", "server", "discussion"
-                    ),
-                    icon = Icons.Filled.Group,
-                    iconContainer = { MaterialTheme.colorScheme.tertiaryContainer },
-                    iconTint = { MaterialTheme.colorScheme.onTertiaryContainer },
-                    parentTab = SettingsTab.ABOUT,
-                    section = "About & Community",
-                    type = EntryType.ACTION,
-                )
-            )
-            add(
-                SettingsEntry(
-                    id = "about.more_apps",
-                    title = "More Apps from Clash Projects",
-                    subtitle = "Join @MaterialYouApp on Telegram to discover other applications",
-                    keywords = listOf(
-                        "more apps", "material you app", "other apps", "clash projects", "developer"
-                    ),
-                    icon = Icons.Filled.AutoAwesome,
-                    iconContainer = { MaterialTheme.colorScheme.primaryContainer },
-                    iconTint = { MaterialTheme.colorScheme.onPrimaryContainer },
-                    parentTab = SettingsTab.ABOUT,
-                    section = "About & Community",
-                    type = EntryType.ACTION,
-                )
-            )
-            add(
-                SettingsEntry(
                     id = "about.diagnostics",
                     title = "Export Diagnostics & Logs",
                     subtitle = "Export diagnostic report, crash logs, and hardware device info",
@@ -1384,7 +1335,7 @@ object SettingsSearchIndex {
                 SettingsEntry(
                     id = "about.source_code",
                     title = "Open Source Code",
-                    subtitle = "View repository at github.com/Clash-Projects/LastWave-native",
+                    subtitle = "View repository at github.com/candelab2026/CLPlayer",
                     keywords = listOf(
                         "source code", "github", "open source", "repository", "gpl", "license",
                         "contribute", "git"

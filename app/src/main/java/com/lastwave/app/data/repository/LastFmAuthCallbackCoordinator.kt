@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-const val LAST_FM_AUTH_CALLBACK_URI = "lastwave://auth-callback"
+const val LAST_FM_AUTH_CALLBACK_URI = "clplayer://auth-callback"
 
 /** Carries the browser redirect safely into the login ViewModel. */
 @Singleton
@@ -20,7 +20,7 @@ class LastFmAuthCallbackCoordinator @Inject constructor() {
     @Synchronized
     fun capture(intent: Intent?): Boolean {
         val uri = intent?.data ?: return false
-        if (uri.scheme != "lastwave" || uri.host != "auth-callback") return false
+        if (uri.scheme != "clplayer" || uri.host != "auth-callback") return false
 
         val token = uri.getQueryParameter("token")?.trim().orEmpty()
         if (token.isEmpty()) return false

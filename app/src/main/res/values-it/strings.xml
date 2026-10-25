@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LastWave</string>
-    <string name="widget_name">Lettore LastWave</string>
+    <string name="app_name">CLPlayer</string>
+    <string name="widget_name">Lettore CLPlayer</string>
     <string name="widget_description">Copertina, dettagli del brano e controlli di riproduzione per ogni app multimediale</string>
-    <string name="widget_obsidian_name">LastWave Vetro ossidiana</string>
+    <string name="widget_obsidian_name">CLPlayer Vetro ossidiana</string>
     <string name="widget_obsidian_description">Lettore in vetro ossidiana smerigliato, con profondità traslucida e bordo cristallino</string>
 
     <!-- Bottom navigation -->
@@ -15,7 +15,7 @@
     <string name="update_available">Aggiornamento disponibile</string>
     <string name="update">Aggiorna</string>
     <string name="dismiss_update">Ignora aggiornamento</string>
-    <string name="update_ready_to_install">LastWave v%1$s è pronto per l\'installazione</string>
+    <string name="update_ready_to_install">CLPlayer v%1$s è pronto per l\'installazione</string>
 
     <!-- Settings -->
     <string name="settings">Impostazioni</string>
@@ -338,7 +338,7 @@
     <string name="dialog_clear_all_text">Rimuove credenziali, playlist, brani scaricati e dati in cache. L\'operazione non si può annullare.</string>
     <string name="dialog_clear_all_confirm">Cancella tutto</string>
     <string name="dialog_disconnect_yt_title">Disconnettere YouTube Music?</string>
-    <string name="dialog_disconnect_yt_text">Le playlist già copiate sul tuo account restano lì, ma LastWave smette di sincronizzare e dimentica la connessione.</string>
+    <string name="dialog_disconnect_yt_text">Le playlist già copiate sul tuo account restano lì, ma CLPlayer smette di sincronizzare e dimentica la connessione.</string>
     <string name="dialog_logout_title">Uscire da Last.fm?</string>
     <string name="dialog_logout_text">Playlist e dati in cache verranno conservati.</string>
 
@@ -818,7 +818,7 @@
     <string name="set_lfm_disc_title">Disconnettere Last.fm?</string>
     <string name="set_lfm_disc_text">Gli scrobble globali si mettono in pausa. Le Statistiche passano alla cronologia locale: non viene eliminato nulla.</string>
     <string name="set_lfm_disc_btn">Disconnetti</string>
-    <string name="set_about_title">LastWave</string>
+    <string name="set_about_title">CLPlayer</string>
     <string name="set_color_title">Colore personalizzato</string>
     <string name="set_hue">Tonalità</string>
     <string name="set_sat">Saturazione</string>
@@ -827,7 +827,7 @@
     <string name="set_eq_enable">Attiva equalizzatore</string>
     <string name="set_eq_custom">Personalizzato</string>
     <string name="set_yt_channel">Canale YouTube</string>
-    <string name="set_yt_channel_sub">Scegli il canale di cui LastWave usa libreria, mi piace e cronologia</string>
+    <string name="set_yt_channel_sub">Scegli il canale di cui CLPlayer usa libreria, mi piace e cronologia</string>
     <string name="set_yt_loading">Caricamento canali…</string>
     <string name="set_yt_empty_title">Nessun canale trovato</string>
     <string name="set_yt_empty_sub">Controlla la connessione, poi riprova.</string>
@@ -865,11 +865,11 @@
     <string name="set_usb_old">Richiede Android 10 o successivo</string>
     <string name="set_usb_on">usbdevfs diretto verso il DAC • il bit-perfect lo attiva in automatico</string>
     <string name="set_usb_off">Disattivo • serve un DAC USB e il bit-perfect (o questo interruttore)</string>
-    <string name="set_yt_hist_on">Attivo • i brani ascoltati in LastWave, anche lossless e download, compaiono nella cronologia di YouTube Music</string>
-    <string name="set_yt_hist_off">Disattivo • gli ascolti in LastWave restano fuori dalla cronologia di YouTube Music</string>
+    <string name="set_yt_hist_on">Attivo • i brani ascoltati in CLPlayer, anche lossless e download, compaiono nella cronologia di YouTube Music</string>
+    <string name="set_yt_hist_off">Disattivo • gli ascolti in CLPlayer restano fuori dalla cronologia di YouTube Music</string>
     <string name="set_discord_title">Discord Rich Presence</string>
     <string name="set_discord_on">Attivo • brano, qualità e copertina compaiono sul profilo Discord</string>
-    <string name="set_discord_off">Disattivo • LastWave non compare sul profilo Discord</string>
+    <string name="set_discord_off">Disattivo • CLPlayer non compare sul profilo Discord</string>
     <string name="set_tg_sub">Unisciti a @clashprojects su Telegram</string>
     <string name="set_discord_support">Supporto Discord</string>
     <string name="set_discord_support_sub">Entra nella community Discord</string>
@@ -895,9 +895,9 @@
     <string name="toast_sync_fail">Sincronizzazione playlist non riuscita: %1$s</string>
     <string name="toast_synced">Sincronizzate %1$d playlist dal JSON locale</string>
     <string name="toast_restored">Ripristinate %1$d playlist%2$s</string>
-    <string name="toast_newer_backup">Questo backup è stato creato con una versione più recente di LastWave</string>
-    <string name="toast_not_backup">Questo file non sembra un backup di LastWave</string>
-    <string name="toast_not_json">Questo non è un backup di LastWave né un JSON di playlist</string>
+    <string name="toast_newer_backup">Questo backup è stato creato con una versione più recente di CLPlayer</string>
+    <string name="toast_not_backup">Questo file non sembra un backup di CLPlayer</string>
+    <string name="toast_not_json">Questo non è un backup di CLPlayer né un JSON di playlist</string>
     <string name="toast_empty_file">Il file selezionato è vuoto o illeggibile</string>
     <string name="toast_restore_fail">Ripristino non riuscito: %1$s</string>
     <string name="toast_restore_read">Errore di lettura del ripristino: %1$s</string>
@@ -1121,7 +1121,7 @@
     <string name="lyshare_mode_lyrics">Testi</string>
     <string name="lyshare_action_share">Condividi</string>
     <string name="lyshare_action_save">Salva</string>
-    <string name="lyshare_saved_to_gallery">Salvato in Pictures/LastWave</string>
+    <string name="lyshare_saved_to_gallery">Salvato in Pictures/CLPlayer</string>
     <string name="lyshare_save_failed">Impossibile salvare l\'immagine</string>
     <string name="lyshare_share_failed">Impossibile condividere l\'immagine</string>
     <string name="lyshare_button_cd">Condividi testi</string>
@@ -1136,7 +1136,7 @@
     <string name="lyshare_color_white">Bianco</string>
     <string name="lyshare_color_black">Nero</string>
     <string name="lyshare_color_accent">Accento</string>
-    <string name="lyshare_color_brand">Lime LastWave</string>
+    <string name="lyshare_color_brand">Lime CLPlayer</string>
     <string name="lyshare_accessibility_line_selected">Selezionata, riga %1$d di %2$d</string>
     <string name="lyshare_accessibility_line_unselected">Riga %1$d di %2$d</string>
 </resources>

@@ -102,7 +102,7 @@ object CrashRecorder {
 
         file.writeText(buildString {
             appendLine(RULE)
-            appendLine(" LastWave crash report")
+            appendLine(" CLPlayer crash report")
             appendLine(RULE)
             appendLine("Crash type   : ${type.label}")
             appendLine("Recorded at  : ${stamp(now)}")
