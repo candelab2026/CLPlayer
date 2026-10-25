@@ -417,6 +417,16 @@ fun ExternalPlaylistImportScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
 
+                                if (preview.truncated) {
+                                    val of = preview.totalTracks?.let { " of $it" }.orEmpty()
+                                    Text(
+                                        "Only ${rows.size}$of tracks could be read. Spotify's public page " +
+                                            "shows the first 100; connect your Spotify account to import them all.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+
                                 state.lastResult?.let { result ->
                                     val skipped = (result.totalRows - result.matchedCount).coerceAtLeast(0)
                                     Text(

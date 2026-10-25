@@ -31,6 +31,10 @@ data class ExternalPlaylistResult(
     val author: String? = null,
     val artworkUrl: String? = null,
     val rows: List<ExternalTrackRow>,
+    /** Track count reported by the provider, when known. */
+    val totalTracks: Int? = null,
+    /** True when [rows] is known or likely to be only part of the playlist. */
+    val truncated: Boolean = false,
 )
 
 /** Outcome of a match pass: mirrors [CsvImportResult] so the UI reports identically. */
