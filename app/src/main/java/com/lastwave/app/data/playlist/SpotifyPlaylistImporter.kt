@@ -145,7 +145,6 @@ class SpotifyPlaylistImporter @Inject constructor(
         )
     }
 
-<<<<<<< HEAD
     private fun fetchPublicTrackTotal(id: String): Int? {
         val request = Request.Builder()
             .url("$PLAYLIST_PAGE_BASE$id")
@@ -168,25 +167,6 @@ class SpotifyPlaylistImporter @Inject constructor(
         return digits.toIntOrNull()
     }
 
-    private fun fetchViaSpotifyApi(id: String, token: String): ExternalPlaylistResult? {
-        val meta = getJson(
-            "https://api.spotify.com/v1/playlists/$id?fields=name,owner(display_name),images,tracks(total)",
-            token,
-        ) ?: return null
-        val title = meta["name"]?.jsonPrimitive?.contentOrNull ?: "Spotify Playlist"
-        val author = meta["owner"]?.jsonObject?.get("display_name")?.jsonPrimitive?.contentOrNull
-        val artwork = meta["images"]?.jsonArray?.firstOrNull()?.jsonObject?.get("url")?.jsonPrimitive?.contentOrNull
-        val total = meta["tracks"]?.jsonObject?.get("total")?.jsonPrimitive?.intOrNull
-
-        val rows = mutableListOf<ExternalTrackRow>()
-        var nextUrl: String? = "https://api.spotify.com/v1/playlists/$id/tracks?limit=$API_PAGE_SIZE&offset=0"
-        var pages = 0
-        while (!nextUrl.isNullOrBlank() && pages < MAX_API_PAGES) {
-            pages++
-            val page = getJson(nextUrl, token) ?: break
-            parseTracksPage(page, rows)
-            nextUrl = page["next"]?.jsonPrimitive?.contentOrNull
-=======
     private fun fetchViaPathfinder(id: String, token: String, clientToken: String?): ExternalPlaylistResult? {
         val rows = mutableListOf<ExternalTrackRow>()
         var title = "Spotify Playlist"
@@ -254,7 +234,6 @@ class SpotifyPlaylistImporter @Inject constructor(
             }
 
             offset += items.size
->>>>>>> upstream/main
         }
 
         if (rows.isEmpty()) return null
@@ -264,72 +243,11 @@ class SpotifyPlaylistImporter @Inject constructor(
             author = author,
             artworkUrl = artworkUrl,
             rows = rows,
-            totalTracks = total,
-            truncated = total != null && total > rows.size,
+            totalTracks = totalCount.takeIf { it != Int.MAX_VALUE },
+            truncated = totalCount != Int.MAX_VALUE && totalCount > rows.size,
         )
     }
 
-<<<<<<< HEAD
-    /**
-     * GET [url] as a JSON object, waiting out Spotify's 429 rate limit (honouring
-     * `Retry-After`, capped) a few times. Null on any other failure.
-     */
-    private fun getJson(url: String, token: String): JsonObject? {
-        repeat(RATE_LIMIT_RETRIES + 1) {
-            val request = Request.Builder()
-                .url(url)
-                .header("Authorization", "Bearer $token")
-                .header("User-Agent", DESKTOP_USER_AGENT)
-                .header("Accept", "application/json")
-                .build()
-            var waitMs = -1L
-            val body = client.newCall(request).execute().use { response ->
-                when {
-                    response.code == 429 -> {
-                        val seconds = response.header("Retry-After")?.trim()?.toLongOrNull() ?: 1L
-                        waitMs = (seconds * 1000).coerceIn(500L, MAX_RETRY_WAIT_MS)
-                        null
-                    }
-                    !response.isSuccessful -> null
-                    else -> response.body?.string()
-                }
-            }
-            if (waitMs < 0) {
-                if (body.isNullOrBlank()) return null
-                return try {
-                    json.parseToJsonElement(body) as? JsonObject
-                } catch (e: Exception) {
-                    Log.w(TAG, "Unreadable Spotify API response", e)
-                    null
-                }
-            }
-            Thread.sleep(waitMs)
-        }
-        return null
-    }
-
-    /**
-     * Pure parser for one page of `items` (`{ track: {...} }` entries). Skips removed
-     * tracks and podcast episodes; returns how many rows were appended.
-     */
-    internal fun parseTracksPage(container: JsonObject?, outList: MutableList<ExternalTrackRow>): Int {
-        val items = container?.get("items") as? JsonArray ?: return 0
-        val before = outList.size
-        for (item in items) {
-            val trackObj = (item as? JsonObject)?.get("track") as? JsonObject ?: continue
-            if (trackObj.text("type") == "episode") continue
-            val name = trackObj.text("name")?.clean()?.takeIf(String::isNotBlank) ?: continue
-            val artists = (trackObj["artists"] as? JsonArray)?.mapNotNull {
-                (it as? JsonObject)?.text("name")?.clean()?.takeIf(String::isNotBlank)
-            }?.joinToString(", ").orEmpty()
-            val album = (trackObj["album"] as? JsonObject)?.text("name")?.clean()
-            outList += ExternalTrackRow(title = name, artist = artists, album = album)
-        }
-        return outList.size - before
-    }
-
-=======
->>>>>>> upstream/main
     /**
      * Fetches playlists from the connected Spotify account library via Pathfinder.
      */
@@ -404,16 +322,7 @@ class SpotifyPlaylistImporter @Inject constructor(
         var offset = 0
         var totalCount = Int.MAX_VALUE
         var pages = 0
-        var total: Int? = null
 
-<<<<<<< HEAD
-        while (!nextUrl.isNullOrBlank() && pages < MAX_LIKED_PAGES) {
-            pages++
-            val page = getJson(nextUrl, token) ?: break
-            if (total == null) total = page["total"]?.jsonPrimitive?.intOrNull
-            parseTracksPage(page, rows)
-            nextUrl = page["next"]?.jsonPrimitive?.contentOrNull
-=======
         while (offset < totalCount && pages < 20) {
             pages++
             val variables = """{"offset":$offset,"limit":50}"""
@@ -462,7 +371,6 @@ class SpotifyPlaylistImporter @Inject constructor(
             }
 
             offset += items.size
->>>>>>> upstream/main
         }
 
         ExternalPlaylistResult(
@@ -470,8 +378,6 @@ class SpotifyPlaylistImporter @Inject constructor(
             title = "Spotify Liked Songs",
             author = "Spotify",
             rows = rows,
-            totalTracks = total,
-            truncated = total != null && total > rows.size,
         )
     }
 
@@ -571,21 +477,16 @@ class SpotifyPlaylistImporter @Inject constructor(
         const val HASH_LIBRARY_V3 = "390c78e5b951029bad359785e69b07b536a509c581cbcd0aded5e5067f187455"
         const val HASH_FETCH_LIBRARY_TRACKS = "087278b20b743578a6262c2b0b4bcd20d879c503cc359a2285baf083ef944240"
 
-        const val EMBED_BASE = "https://open.spotify.com/embed/playlist/"
         const val PLAYLIST_PAGE_BASE = "https://open.spotify.com/playlist/"
         /** The public embed page lists at most this many tracks. */
         const val EMBED_TRACK_LIMIT = 100
-        const val API_PAGE_SIZE = 100
-        const val MAX_API_PAGES = 100
-        const val MAX_LIKED_PAGES = 400
-        const val RATE_LIMIT_RETRIES = 3
-        const val MAX_RETRY_WAIT_MS = 10_000L
+        val OG_DESCRIPTION = Regex("""<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']""")
+        val TRACK_COUNT = Regex("""(\d[\d.,]*)\s*(?:items?|songs?|tracks?|brani)""", RegexOption.IGNORE_CASE)
+        const val EMBED_BASE = "https://open.spotify.com/embed/playlist/"
         const val SPOTIFY_TRACK_URI = "spotify:track:"
         const val SPOTIFY_PLAYLIST_URI = "spotify:playlist:"
         const val DESKTOP_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        val OG_DESCRIPTION = Regex("""<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']""")
-        val TRACK_COUNT = Regex("""(\d[\d.,]*)\s*(?:items?|songs?|tracks?|brani)""", RegexOption.IGNORE_CASE)
         val NEXT_DATA = Regex(
             """<script[^>]*\bid=["']__NEXT_DATA__["'][^>]*>(.*?)</script>""",
             RegexOption.DOT_MATCHES_ALL,

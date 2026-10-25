@@ -183,13 +183,10 @@ data class MiscSettings(
     val canvasFullBleed: Boolean = true,
     /** When true, canvas video loops may be fetched over cellular data. */
     val canvasOverCellular: Boolean = true,
-<<<<<<< HEAD
-=======
     /** When true, a liked song is also marked as liked on YouTube Music. */
     val likedSongsYouTubeSync: Boolean = true,
     /** When true, a liked song is added to this app's own Liked Songs playlist. */
     val likedSongsLocalSync: Boolean = true,
->>>>>>> upstream/main
     /** When false, podcast shelves, screens and episode search stay hidden.
      *  Existing progress is preserved so re-enabling resumes where you left off. */
     val podcastsEnabled: Boolean = true,
@@ -313,12 +310,9 @@ class SettingsPreferences @Inject constructor(
         val CANVAS_ENABLED = booleanPreferencesKey("lw_canvas_enabled")
         val CANVAS_FULL_BLEED = booleanPreferencesKey("lw_canvas_full_bleed")
         val CANVAS_OVER_CELLULAR = booleanPreferencesKey("lw_canvas_over_cellular")
-<<<<<<< HEAD
-=======
         val LIKED_SONGS_YOUTUBE_SYNC = booleanPreferencesKey("lw_liked_songs_youtube_sync")
         val LIKED_SONGS_LOCAL_SYNC = booleanPreferencesKey("lw_liked_songs_local_sync")
         val LIKED_SONGS_LOCAL_ONLY = stringPreferencesKey("lw_liked_songs_local_only")
->>>>>>> upstream/main
         val PODCASTS_ENABLED = booleanPreferencesKey("lw_podcasts_enabled")
         val SUPPRESS_YOUTUBE_LOGIN_PROMPT = booleanPreferencesKey("lw_suppress_youtube_login_prompt")
     }
@@ -398,11 +392,8 @@ class SettingsPreferences @Inject constructor(
                 canvasEnabled = p.readSafely(Keys.CANVAS_ENABLED) ?: true,
                 canvasFullBleed = p.readSafely(Keys.CANVAS_FULL_BLEED) ?: true,
                 canvasOverCellular = p.readSafely(Keys.CANVAS_OVER_CELLULAR) ?: true,
-<<<<<<< HEAD
-=======
                 likedSongsYouTubeSync = p.readSafely(Keys.LIKED_SONGS_YOUTUBE_SYNC) ?: true,
                 likedSongsLocalSync = p.readSafely(Keys.LIKED_SONGS_LOCAL_SYNC) ?: true,
->>>>>>> upstream/main
                 podcastsEnabled = p.readSafely(Keys.PODCASTS_ENABLED) ?: true,
                 suppressYouTubeLoginPrompt = p.readSafely(Keys.SUPPRESS_YOUTUBE_LOGIN_PROMPT) ?: false,
             )
@@ -765,8 +756,6 @@ class SettingsPreferences @Inject constructor(
         dataStore.edit { it[Keys.CANVAS_OVER_CELLULAR] = enabled }
     }
 
-<<<<<<< HEAD
-=======
     /** Whether a liked song is added to this app's own Liked Songs playlist. */
     val likedSongsLocalSync: Flow<Boolean> = dataStore.data
         .recoverPreferences("SettingsPreferences")
@@ -794,7 +783,6 @@ class SettingsPreferences @Inject constructor(
         dataStore.edit { it[Keys.LIKED_SONGS_LOCAL_ONLY] = value }
     }
 
->>>>>>> upstream/main
     private companion object {
         val LOSSLESS_QUALITIES = setOf(-1, 4, 5, 6, 7, 27, 28)
         val DOWNLOAD_QUALITIES = setOf(-1, 4, 5, 6, 7, 27, 28)
